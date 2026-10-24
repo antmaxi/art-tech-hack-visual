@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import { ANNUAL_YEARS, SOURCE, band, baselineMean, statusLabel, type YearRecord } from "@/lib/forest-data";
-import { noise, rgb, vhiColor } from "@/lib/forest-art";
+import { breathRate, noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
-import { AVAILABLE_REGION_IDS, getAnnualRegion, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
+import { AVAILABLE_REGION_IDS, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
 import { canopyAnnualVhi } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { DEFAULT_REGION, regionLabel } from "@/lib/vhi-source";
@@ -256,16 +256,16 @@ export function ForestInstallation() {
       const motionTarget = y.vci ?? y.vhi ?? m;
       shown += (target - shown) * 0.02;
       motion += (motionTarget - motion) * 0.02;
-      const health = clamp(shown / 100);
-      const stress = clamp((m - shown) / 30);
-      const vigor = clamp((shown - m) / 25);
-      const mStress = clamp((m - motion) / 30);
+      // calibrate against the observed record: worst year → 0, best year → 1
+      const health = normalizeVhi(shown);
+      const motionHealth = normalizeVhi(motion);
+      const stress = 1 - health;
+      const mStress = 1 - motionHealth;
 
-      // breathing: calm & deep when healthy, shallow, faster and irregular under stress
-      const rate = 0.006 + mStress * 0.012;
-      phase += rate * (1 + mStress * 0.9 * noise(clock * 2, 3.3));
+      // breathing: slow and deep at peak health (~9.5s), fast and shallow in drought (~2s)
+      phase += breathRate(motionHealth) * (1 + mStress * 0.9 * noise(clock * 2, 3.3));
       const hold = mStress > 0.3 ? clamp(noise(clock * 3, 9.1) * 3 * mStress) : 0; // interruptions
-      const breath = Math.sin(phase) * (1 - hold) * (0.55 + vigor * 0.45 - mStress * 0.3);
+      const breath = Math.sin(phase) * (1 - hold) * (0.55 + health * 0.45 - mStress * 0.3);
       clock += 0.0022 + mStress * 0.004;
 
       const w = low.width;
@@ -287,17 +287,14 @@ export function ForestInstallation() {
           // fragmentation under stress
           const frag = stress > 0.15 && fine < stress * 0.45 ? 0.15 : 1;
           const lum = (0.08 + e * e * 0.9) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
-          let R = 6 + lum * 40;
-          let G = 14 + lum * 170 + fine * 18;
-          let B = 10 + lum * 90;
-          // earth tones bleed in with stress
-          R += stress * lum * 150;
-          G -= stress * lum * 70;
-          B -= stress * lum * 60;
+          // continuous gradient: deep emerald at peak health, dark scorched rust in drought
+          let R = 6 + lum * (34 + stress * 130);
+          let G = 12 + lum * (185 - stress * 115) + fine * 18 * (1 - stress * 0.7);
+          let B = 10 + lum * (95 - stress * 60);
           const cl = contour * (0.35 + health * 0.6) * frag;
-          R += cl * (90 + stress * 80);
-          G += cl * 200;
-          B += cl * 130;
+          R += cl * (90 + stress * 120);
+          G += cl * (200 - stress * 90);
+          B += cl * (130 - stress * 80);
           const o = (j * w + i) * 4;
           data[o] = R;
           data[o + 1] = G;
@@ -313,7 +310,7 @@ export function ForestInstallation() {
 
       // luminous particles
       fctx.globalCompositeOperation = "lighter";
-      const speed = 0.0006 + clamp(motion / 100) * 0.0012;
+      const speed = 0.0005 + mStress * 0.0022;
       const pulse = 0.55 + breath * 0.45;
       const sz = Math.max(1.5, W / 600);
       for (let k = 0; k < P; k++) {
@@ -328,7 +325,11 @@ export function ForestInstallation() {
         }
         if (mStress > 0.4 && Math.random() < mStress * 0.3) continue; // flicker
         const al = Math.sin(pl[k]! * Math.PI) * pulse * (0.25 + health * 0.6);
-        fctx.fillStyle = stress > vigor ? `rgba(230,170,110,${al})` : `rgba(150,255,190,${al})`;
+        // particle tint follows the same emerald → rust gradient as the field
+        const pr = Math.round(150 + stress * 85);
+        const pg = Math.round(255 - stress * 105);
+        const pb = Math.round(190 - stress * 110);
+        fctx.fillStyle = `rgba(${pr},${pg},${pb},${al})`;
         fctx.fillRect(px[k]! * W, py[k]! * H, sz, sz);
       }
       fctx.globalCompositeOperation = "source-over";
