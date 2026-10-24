@@ -48,7 +48,11 @@ function foliage(color: string, seed: number) {
   const c = s.getContext("2d")!;
   const base = rgb(color);
   const dark = rgb(cssVar("--forest-shadow"));
-  const light = rgb(cssVar("--river-foam"));
+  // highlights tinted from the crown's own colour, warmed — never a foreign white
+  const [br, bg, bb] = base.split(",").map(Number);
+  const light = [br, bg, bb]
+    .map((c, k) => Math.round(c! + ([238, 230, 198][k]! - c!) * 0.55))
+    .join(",");
   const rand = rng(seed);
   const puff = (x: number, y: number, r: number, tone: string, a: number) => {
     const g = c.createRadialGradient(x, y, 0, x, y, r);
@@ -86,7 +90,7 @@ function foliage(color: string, seed: number) {
       S / 2 + (rand() - 0.5) * S * 0.26 - S * 0.09,
       S * (0.05 + rand() * 0.1),
       light,
-      0.32,
+      0.24,
     );
   return s;
 }
