@@ -23,6 +23,11 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     if (!target || !ctx) return;
     target.width = 1800;
     target.height = 1200;
+    const light = document.createElement("canvas");
+    light.width = 720;
+    light.height = 480;
+    const lightContext = light.getContext("2d", { willReadFrequently: true });
+    if (!lightContext) return;
     // Geometry belongs only to this reference mockup, never to the shared artwork.
     type Surface = { corners: number[][]; alpha: number; bend: number };
     const surfaces: Surface[] = [
@@ -49,6 +54,9 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
       const x = p[0] ?? 0, y = p[1] ?? 0;
       const qx = q[0] ?? 0, qy = q[1] ?? 0, rx = r[0] ?? 0, ry = r[1] ?? 0, tx = s[0] ?? 0, ty = s[1] ?? 0;
       ctx.save();
+      // Soft surface boundaries avoid rectangular light sheets over natural textures.
+      const edge = Math.min(1, (u + du / 2) * 12, (1 - u - du / 2) * 12, (v + dv / 2) * 12, (1 - v - dv / 2) * 12);
+      ctx.globalAlpha *= Math.max(0, edge);
       ctx.beginPath();
       if (lower) { ctx.moveTo(qx,qy); ctx.lineTo(tx,ty); ctx.lineTo(rx,ry); }
       else { ctx.moveTo(x,y); ctx.lineTo(qx,qy); ctx.lineTo(rx,ry); }
@@ -69,11 +77,18 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
       const original = source.current;
       if (original && original.width > 0 && original.height > 0 && time - previous >= 50) {
         ctx.clearRect(0,0,target.width,target.height);
+        lightContext.drawImage(original,0,0,light.width,light.height);
+        const pixels = lightContext.getImageData(0,0,light.width,light.height);
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          const luminance = (pixels.data[i] ?? 0) * 0.2126 + (pixels.data[i+1] ?? 0) * 0.7152 + (pixels.data[i+2] ?? 0) * 0.0722;
+          pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - 45) * 3.5));
+        }
+        lightContext.putImageData(pixels,0,0);
         for (const patch of surfaces) {
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
-            tile(original,patch,column/20,row/12,1/20,1/12,false);
-            tile(original,patch,column/20,row/12,1/20,1/12,true);
+            tile(light,patch,column/20,row/12,1/20,1/12,false);
+            tile(light,patch,column/20,row/12,1/20,1/12,true);
           }
         }
         ctx.globalAlpha = 1;
@@ -100,7 +115,7 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
   }, [source, animated]);
-  return <canvas ref={canvas} className={`zauber-projection ${styles.projection}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup" />;
+  return <canvas ref={canvas} className={`zauber-projection ${styles['projection']}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup" />;
 }
 
 function ConceptScene({ source, sound, onToggleSound, year }: Props) {
@@ -109,7 +124,7 @@ function ConceptScene({ source, sound, onToggleSound, year }: Props) {
   return (
     <>
       <div className="zauber-environment" aria-hidden="true">
-        <div className={`zauber-stage ${styles.stage}`}>
+        <div className={`zauber-stage ${styles['stage']}`}>
           <img src={setting} width={1800} height={1200} alt="" className="zauber-setting" />
           <Projection source={source} animated={animated} />
         </div>
@@ -153,7 +168,7 @@ export function ZauberparkConcept(props: Props) {
         <Button variant="ghost" className="forest-zauber-entry">IMAGINE THIS AT ZAUBERPARK ↗</Button>
       </Dialog.Trigger>
       <Dialog.Portal container={props.container.current}>
-        <Dialog.Content className={`zauber-view ${styles.mockup}`} onEscapeKeyDown={(event) => event.stopPropagation()}>
+        <Dialog.Content className={`zauber-view ${styles['mockup']}`} onEscapeKeyDown={(event) => event.stopPropagation()}>
           <ConceptScene {...props} />
         </Dialog.Content>
       </Dialog.Portal>
