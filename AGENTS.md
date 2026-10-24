@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep the Zauberpark concept in a scoped modal that mirrors the existing field canvas rather than remounting the installation, so the timeline, evolving animation and shared audio survive opening and closing it.
+- Mount the concept portal inside the Forest wall and let its dialog own keyboard dismissal while open, so it also works within document fullscreen without exiting the underlying immersive mode.
