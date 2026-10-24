@@ -42,8 +42,22 @@ export function ForestInstallation() {
   const fieldEl = useRef<HTMLCanvasElement>(null);
   const mapApi = useRef<{ show: (y: YearRecord, selected: number) => void; resize: () => void } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
+  const barRef = useRef<HTMLElement | null>(null);
+
+  // Keep the plots clear of the control bar: publish the bar's live height as a CSS variable.
+  useEffect(() => {
+    const wall = wallRef.current;
+    const bar = barRef.current;
+    if (!wall || !bar) return;
+    const sync = () => wall.style.setProperty("--bar-h", `${Math.round(bar.getBoundingClientRect().height)}px`);
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
 
   // ---------- PANEL 1: map ----------
+
   useEffect(() => {
     let disposed = false;
     let map: import("leaflet").Map | null = null;
@@ -486,7 +500,7 @@ export function ForestInstallation() {
         </section>
       </div>
 
-      <footer className="forest-bar">
+      <footer className="forest-bar" ref={barRef}>
         <canvas
           ref={tlEl}
           className="forest-tl forest-clickable"
@@ -530,49 +544,50 @@ export function ForestInstallation() {
             Legend
           </Button>
           <AboutDialog container={wallRef} />
+          <div className="forest-cta">
+            {immersive ? (
+              <Button variant="ghost" type="button" onClick={exitImmersive}>
+                Exit · Esc
+              </Button>
+            ) : (
+              <Button variant="ghost" type="button" className="forest-enter" onClick={enterImmersive}>
+                Enter immersive mode
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="forest-cta">
-          {immersive ? (
-            <Button variant="ghost" type="button" onClick={exitImmersive}>
-              Exit · Esc
-            </Button>
-          ) : (
-            <Button variant="ghost" type="button" className="forest-enter" onClick={enterImmersive}>
-              Enter immersive mode
-            </Button>
-          )}
+        <div className="forest-foot">
+          <a className="forest-source forest-data-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
+            Data source
+          </a>
           <ZauberparkConcept
             container={wallRef}
             open={zauberpark}
             onOpenChange={setZauberpark}
           />
         </div>
-        <a className="forest-source forest-data-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
-          Data source
-        </a>
+
       </footer>
 
       {legend && !immersive && (
         <aside className="forest-legend">
           <p>
-            <b>VHI</b> The Vegetation Health Index is swisstopo's satellite measure of vegetation health on a 0–100
-            scale. Every value compares the present with the same place and season during the 1991–2020 climate
-            reference period, so it reads as anomaly rather than absolute greenness. swisstopo classifies it as:
-            60–100 excellent, 50–60 good, 40–50 normal; below 40 vegetation shows signs of stress — slightly stressed
-            to 30, stressed to 20, severely stressed to 10, extremely stressed below 10.
+            <b>VHI</b> The Vegetation Health Index is a satellite reading of how well plants are doing. It runs from 0
+            to 100: high means green, vigorous and unstressed; low means thirsty and struggling. Every value compares
+            this year with the same place's own normal, so it tells you how unusual things feel rather than simply how
+            green the map looks.
           </p>
           <p>
-            <b>How it is built</b> VHI combines two components. The Vegetation Condition Index (VCI) compares current
-            greenness (NDVI, from red and near-infrared reflectance) with its historical min–max for the same place and
-            season. The Temperature Condition Index (TCI) does the same for land-surface temperature, inverted so hotter
-            means lower. The standard formulation weights the two equally (VHI = 0.5 · VCI + 0.5 · TCI); swisstopo
-            derives both on a 10 × 10 m grid from Sentinel-2, Landsat and Meteosat observations.
+            <b>How to read it</b> swisstopo's scale: 60–100 excellent, 50–60 good, 40–50 normal, and below 40 the
+            vegetation is under stress — the lower the number, the harsher the drought. Here 1992 sits in the stressed
+            band and 2017 in the good band, just below excellent.
           </p>
           <p>
             <b>In this work</b> Monthly swisstopo / swissEO observations for 38 Swiss forest regions, 1991–2026,
-            averaged per calendar year. The map and Canopy show regional means (or the national mean for All of
-            Switzerland); the breathing field and timeline use the equal-weight national mean.
+            averaged per calendar year. The map and Canopy follow the region you select, or all of Switzerland; the
+            breathing field and the timeline follow the national average.
           </p>
+
         </aside>
       )}
     </div>
