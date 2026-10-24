@@ -22,7 +22,7 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     if (!target || !ctx) return;
     target.width = 1800;
     target.height = 1200;
-    // Surveyed image-space corners of the clear grassy slope, not a new screen.
+    // Photo-space corners of the clear grassy slope, not a new screen.
     const corners = [[490, 1030], [1760, 890], [1775, 1140], [850, 1180]];
     const surface = (u: number, v: number) => {
       const [a, b, c, d] = corners;
