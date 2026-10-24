@@ -142,15 +142,17 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
           // The physical Zauberpark sign stays free of projected light.
           [[1462,318],[1680,318],[1680,850],[1462,850]],
           // Visitors walking the path remain unprojected silhouettes.
-          [[556,610],[680,610],[680,910],[556,910]],
-          [[735,632],[802,632],[802,795],[735,795]],
-          [[824,650],[874,650],[874,768],[824,768]],
+          [[603,614],[633,614],[644,660],[671,683],[674,785],[644,796],[639,901],[580,901],[585,796],[564,765],[572,671],[596,658]],
+          [[755,635],[778,635],[793,664],[795,719],[782,730],[779,793],[750,793],[746,730],[737,719],[740,664]],
+          [[843,655],[857,655],[870,676],[870,712],[862,719],[860,767],[839,767],[836,719],[828,712],[829,676]],
         ];
+        ctx.filter = "blur(2px)"; // soft occlusion edge, like real shadows cast by the visitors
         for (const polygon of exclusions) {
           ctx.beginPath();
           polygon.forEach((point,i) => { const x = point[0] ?? 0, y = point[1] ?? 0; if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
           ctx.closePath(); ctx.fill();
         }
+        ctx.filter = "none";
         ctx.globalCompositeOperation = "source-over";
         previous = time;
       }
