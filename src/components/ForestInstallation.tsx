@@ -255,19 +255,20 @@ export function ForestInstallation() {
       // VHI → colour/intensity; VCI → motion (falls back to VHI until connected)
       const target = y.vhi ?? m;
       const motionTarget = y.vci ?? y.vhi ?? m;
-      shown += (target - shown) * 0.02;
-      motion += (motionTarget - motion) * 0.02;
+      // gentle easing keeps year-to-year transitions smooth, especially in Immersion Mode
+      shown += (target - shown) * 0.012;
+      motion += (motionTarget - motion) * 0.012;
       // calibrate against the observed record: worst year → 0, best year → 1
       const health = normalizeVhi(shown);
       const motionHealth = normalizeVhi(motion);
       const stress = 1 - health;
       const mStress = 1 - motionHealth;
 
-      // breathing: slow and deep at peak health (~9.5s), fast and shallow in drought (~2s)
+      // breathing: very slow and deep at peak health (~23s), fast and shallow in drought (~2s)
       phase += breathRate(motionHealth) * (1 + mStress * 0.9 * noise(clock * 2, 3.3));
-      const hold = mStress > 0.3 ? clamp(noise(clock * 3, 9.1) * 3 * mStress) : 0; // interruptions
+      const hold = clamp((mStress - 0.3) * 2.5, 0, 1) * clamp(noise(clock * 3, 9.1) * 3 * mStress, 0, 1); // interruptions
       const breath = Math.sin(phase) * (1 - hold) * (0.55 + health * 0.45 - mStress * 0.3);
-      clock += 0.0022 + mStress * 0.004;
+      clock += 0.0012 + mStress * 0.006;
 
       const w = low.width;
       const h = low.height;
