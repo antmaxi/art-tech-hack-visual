@@ -6,7 +6,7 @@ import { ZauberparkConcept } from "@/components/ZauberparkConcept";
 import arthack from "@/assets/arthack.mp3.asset.json";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
-import { AVAILABLE_REGION_IDS, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
+import { AVAILABLE_REGION_IDS, audioTimeForIndex, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
 import { canopyAnnualVhi } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { DEFAULT_REGION, regionLabel } from "@/lib/vhi-source";
