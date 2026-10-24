@@ -65,7 +65,7 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
       const pixels = plate.getImageData(0, 0, plate.canvas.width, plate.canvas.height);
       for (let i = 0; i < pixels.data.length; i += 4) {
         const luminance = (pixels.data[i] ?? 0) * 0.2126 + (pixels.data[i+1] ?? 0) * 0.7152 + (pixels.data[i+2] ?? 0) * 0.0722;
-        pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - floor) * 4));
+        pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - floor) * 7));
       }
       plate.putImageData(pixels, 0, 0);
     };
@@ -117,9 +117,9 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
       const canopyCanvas = canopyHost?.current?.querySelector("canvas");
       if (original && original.width > 0 && original.height > 0 && time - previous >= 50) {
         ctx.clearRect(0,0,target.width,target.height);
-        threshold(fieldContext, original, 18);
+        threshold(fieldContext, original, 6);
         const hasCanopy = canopyCanvas && canopyCanvas.width > 0 && canopyCanvas.height > 0;
-        if (hasCanopy) threshold(canopyContext, canopyCanvas, 20);
+        if (hasCanopy) threshold(canopyContext, canopyCanvas, 5);
         for (const patch of surfaces) {
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
