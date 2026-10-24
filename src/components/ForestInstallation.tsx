@@ -315,7 +315,7 @@ export function ForestInstallation() {
 
       // luminous particles
       fctx.globalCompositeOperation = "lighter";
-      const speed = 0.0005 + mStress * 0.0022;
+      const speed = 0.0003 + mStress * 0.003;
       const pulse = 0.55 + breath * 0.45;
       const sz = Math.max(1.5, W / 600);
       for (let k = 0; k < P; k++) {
