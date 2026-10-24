@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import { ANNUAL_YEARS, SOURCE, band, baselineMean, statusLabel, type YearRecord } from "@/lib/forest-data";
 import { breathRate, noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
+import arthack from "@/assets/arthack.mp3.asset.json";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
 import { AVAILABLE_REGION_IDS, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
@@ -32,15 +33,15 @@ export function ForestInstallation() {
   const canopyHostEl = useRef<HTMLElement | null>(null);
 
   // live values for the animation loop
-  const live = useRef({ years, index, mean, immersive, regionId });
-  live.current = { years, index, mean, immersive, regionId };
+  const live = useRef({ years, index, mean, immersive, regionId, playing });
+  live.current = { years, index, mean, immersive, regionId, playing };
 
   const wallRef = useRef<HTMLDivElement>(null);
   const mapEl = useRef<HTMLDivElement>(null);
   const tlEl = useRef<HTMLCanvasElement>(null);
   const fieldEl = useRef<HTMLCanvasElement>(null);
   const mapApi = useRef<{ show: (y: YearRecord, selected: number) => void; resize: () => void } | null>(null);
-  const audio = useRef<{ ctx: AudioContext; set: (vhi: number, breath: number, stress: number) => void } | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
 
   // ---------- PANEL 1: map ----------
   useEffect(() => {
@@ -288,16 +289,18 @@ export function ForestInstallation() {
           const fine = (noise(u * 9 + 8, v * 9 + clock) + 1) * 0.5;
           // topographic contours: few broad rings at peak health, many tight rings in drought
           const c = (e * (9 + stress * 9) + clock * 0.6) % 1;
-          const contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 4));
+          // drought sharpens the contours into thin vibrant lines
+          const contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 8));
           // fragmentation under stress (continuous, so year transitions never pop)
           const frag = 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1);
-          const lum = (0.08 + e * e * 0.9) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
+          // in drought the glow between lines falls back to near-black, keeping only a slight gradient
+          const lum = (0.08 * (1 - stress * 0.75) + e * e * (0.9 - stress * 0.55)) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
           // continuous gradient: deep emerald at peak health, dark scorched rust in drought
           let R = 6 + lum * (34 + stress * 130);
           let G = 12 + lum * (185 - stress * 115) + fine * 18 * (1 - stress * 0.7);
           let B = 10 + lum * (95 - stress * 60);
-          const cl = contour * (0.35 + health * 0.6) * frag;
-          R += cl * (90 + stress * 120);
+          const cl = contour * (0.35 + health * 0.6 + stress * 0.3) * frag;
+          R += cl * (90 + stress * 170);
           G += cl * (200 - stress * 90);
           B += cl * (130 - stress * 80);
           const o = (j * w + i) * 4;
@@ -344,8 +347,6 @@ export function ForestInstallation() {
       vg.addColorStop(1, "rgba(0,0,0,0.75)");
       fctx.fillStyle = vg;
       fctx.fillRect(0, 0, W, H);
-
-      audio.current?.set(shown, breath, stress);
     };
 
     const loop = (t: number) => {
