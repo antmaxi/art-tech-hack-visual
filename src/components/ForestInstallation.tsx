@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import { ANNUAL_YEARS, SOURCE, band, baselineMean, statusLabel, type YearRecord } from "@/lib/forest-data";
 import { breathRate, noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
+import { AboutDialog } from "@/components/AboutDialog";
 import arthack from "@/assets/arthack.mp3.asset.json";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
@@ -545,6 +546,7 @@ export function ForestInstallation() {
             open={zauberpark}
             onOpenChange={setZauberpark}
           />
+          <AboutDialog container={wallRef} />
         </div>
       </footer>
 
