@@ -273,21 +273,24 @@ export function ForestInstallation() {
       const w = low.width;
       const h = low.height;
       const data = buffer.data;
-      const zoom = 1 - breath * 0.06;
+      // the inhale/exhale swells the whole field: dramatic at peak health, shallow in drought
+      const zoom = 1 - breath * (0.03 + health * 0.15);
       const warp = 1.1 + mStress * 2.6;
+      // healthy years form large soft masses; drought breaks into tight agitated detail
+      const blobFreq = 1.4 + stress * 1.4;
       for (let j = 0; j < h; j++) {
         for (let i = 0; i < w; i++) {
           const u = ((i / w - 0.5) * zoom + 0.5) * (w / h);
           const v = (j / h - 0.5) * zoom + 0.5;
-          const q = noise(u * 2.2 + clock, v * 2.2);
-          const r = noise(u * 2.2 + 4.1, v * 2.2 + clock * 0.8);
-          const e = (noise(u * 1.6 + q * warp, v * 1.6 + r * warp + clock * 0.5) + 1) * 0.5;
+          const q = noise(u * blobFreq + clock, v * blobFreq);
+          const r = noise(u * blobFreq + 4.1, v * blobFreq + clock * 0.8);
+          const e = (noise(u * blobFreq * 0.75 + q * warp, v * blobFreq * 0.75 + r * warp + clock * 0.5) + 1) * 0.5;
           const fine = (noise(u * 9 + 8, v * 9 + clock) + 1) * 0.5;
-          // topographic contours
-          const c = (e * 14 + clock * 0.6) % 1;
+          // topographic contours: few broad rings at peak health, many tight rings in drought
+          const c = (e * (9 + stress * 9) + clock * 0.6) % 1;
           const contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 4));
-          // fragmentation under stress
-          const frag = stress > 0.15 && fine < stress * 0.45 ? 0.15 : 1;
+          // fragmentation under stress (continuous, so year transitions never pop)
+          const frag = 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1);
           const lum = (0.08 + e * e * 0.9) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
           // continuous gradient: deep emerald at peak health, dark scorched rust in drought
           let R = 6 + lum * (34 + stress * 130);
