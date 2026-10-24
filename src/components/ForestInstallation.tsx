@@ -73,6 +73,7 @@ export function ForestInstallation() {
           path.setAttribute('role', 'button');
           path.setAttribute('aria-label', `Select ${regionLabel(region.id)}`);
           path.addEventListener('keydown', (event) => {
+            if (!(event instanceof KeyboardEvent)) return;
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault(); event.stopPropagation(); setRegionId(region.id);
             }
@@ -480,7 +481,7 @@ export function ForestInstallation() {
         </section>
 
         <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
-          <ForestCanvas regionId={regionId} vhi={regionalYear?.vhi} rain={0} airTemp={10} flow={0} />
+          <ForestCanvas regionId={regionId} vhi={regionalYear?.vhi ?? null} rain={0} airTemp={10} flow={0} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
 

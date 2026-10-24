@@ -11,7 +11,7 @@ const monthLabel = (index: number) => `${Math.floor(index / 12)}-${String(index 
 
 export function parseMonthlyVhi(text: string): MonthlyVhi[] {
   return text.trim().split(/\r?\n/).slice(1).map((line) => {
-    const [month, region, value] = line.split(',');
+    const [month = '', region, value] = line.split(',');
     const parsed = value?.trim() ? Number(value) : null;
     return { month, regionId: Number(region), vhi: parsed != null && Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null, interpolated: false };
   });
@@ -34,12 +34,13 @@ export function interpolateMonthly(rows: MonthlyVhi[]): MonthlyVhi[] {
     });
     let previous = -1;
     for (let next = 0; next < series.length; next++) {
-      const value = series[next].vhi;
+      const value = series[next]?.vhi;
       if (value == null) continue;
       const before = series[previous]?.vhi;
       if (previous >= 0 && before != null) {
         for (let i = previous + 1; i < next; i++) {
-          series[i] = { ...series[i], vhi: before + (value - before) * (i - previous) / (next - previous), interpolated: true };
+          const row = series[i];
+          if (row) series[i] = { ...row, vhi: before + (value - before) * (i - previous) / (next - previous), interpolated: true };
         }
       }
       previous = next;
@@ -58,7 +59,7 @@ export function aggregateAnnual(rows: MonthlyVhi[]): AnnualVhi[] {
   return [...groups.values()].map((group) => {
     const valid = group.filter((r) => r.vhi != null);
     return {
-      year: Number(group[0].month.slice(0, 4)), regionId: group[0].regionId,
+      year: Number(group[0]?.month.slice(0, 4)), regionId: group[0]?.regionId ?? 0,
       vhi: valid.length ? valid.reduce((sum, r) => sum + (r.vhi ?? 0), 0) / valid.length : null,
       monthsAvailable: valid.length,
       observedMonths: valid.filter((r) => !r.interpolated).length,

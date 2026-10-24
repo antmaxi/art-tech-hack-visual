@@ -7,7 +7,7 @@ export const SWITZERLAND_BOUNDS: [[number, number], [number, number]] = [[45.82,
 export const MAP_REGIONS = REGIONS.filter((r) => AVAILABLE_REGION_IDS.includes(r.id)).map((region) => ({
   id: region.id,
   rings: region.rings.map((ring) => ring.map(([e, n]) => {
-    const [lng, lat] = proj4(SWISS_GRID, 'EPSG:4326', [e, n]);
-    return [lat, lng] as [number, number];
+    const point = proj4(SWISS_GRID, 'EPSG:4326', { x: e ?? 0, y: n ?? 0 });
+    return [point.y, point.x] as [number, number];
   })),
 }));

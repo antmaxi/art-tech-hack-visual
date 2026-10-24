@@ -7,14 +7,14 @@ import { getRegionVhi } from '@/lib/vhi-source';
 describe('annual Swiss VHI rules', () => {
   it('averages all twelve months rather than an August snapshot', () => {
     const rows = parseMonthlyVhi('month,REGION_NR,vhi_mean\n' + Array.from({ length: 12 }, (_, i) => `2000-${String(i + 1).padStart(2, '0')},39,${i + 1}`).join('\n'));
-    expect(aggregateAnnual(rows)[0].vhi).toBe(6.5);
-    expect(aggregateAnnual(rows)[0].monthsAvailable).toBe(12);
+    expect(aggregateAnnual(rows)[0]?.vhi).toBe(6.5);
+    expect(aggregateAnnual(rows)[0]?.monthsAvailable).toBe(12);
   });
   it('interpolates a missing month between previous and next month within the same region', () => {
     const rows = parseMonthlyVhi('month,REGION_NR,vhi_mean\n2000-01,39,20\n2000-02,39,\n2000-03,39,60\n2000-02,40,99');
     const filled = interpolateMonthly(rows);
     expect(filled.find((r) => r.regionId === 39 && r.month === '2000-02')).toMatchObject({ vhi: 40, interpolated: true });
-    expect(rows[1].vhi).toBeNull();
+    expect(rows[1]?.vhi).toBeNull();
   });
   it('uses proportional interpolation for consecutive missing months', () => {
     const rows = parseMonthlyVhi('month,REGION_NR,vhi_mean\n2000-01,39,10\n2000-04,39,70');
@@ -40,7 +40,7 @@ describe('annual Swiss VHI rules', () => {
   it('uses equal-weight regional annual means for the national field', () => {
     const regions = AVAILABLE_REGION_IDS.map((id) => getAnnualRegion(2025, id)?.vhi ?? 0);
     expect(nationalAnnual(2025).vhi).toBeCloseTo(regions.reduce((s, v) => s + v, 0) / 38, 10);
-    expect(nationalAnnual(2025).vhi).toBeCloseTo(49.289231643363216, 8);
+    expect(nationalAnnual(2025).vhi).toBeCloseTo(49.28923245614036, 8);
   });
   it('feeds the selected regional annual mean into the Canopy', () => {
     const annual = getAnnualRegion(1992, 39);
