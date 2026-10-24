@@ -1,28 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import {
-  PROTOTYPE_YEARS,
+  ANNUAL_YEARS,
   SOURCE,
   band,
   baselineMean,
-  loadYears,
   statusLabel,
   type YearRecord,
 } from "@/lib/forest-data";
 import { noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
 import { ForestCanvas } from "@/components/ForestCanvas";
-
-// Preserve the existing geographical framing independently of station markers.
-const PLACE_BOUNDS: [[number, number], [number, number]] = [
-  [47.133042, 8.3094],
-  [47.4757, 8.756556],
-];
+import { Button } from '@/components/ui/button';
+import { AVAILABLE_REGION_IDS, getAnnualRegion, YEAR_DURATION_MS } from '@/lib/annual-vhi';
+import { MAP_REGIONS, SWITZERLAND_BOUNDS } from '@/lib/forest-regions';
+import { DEFAULT_REGION, regionLabel } from '@/lib/vhi-source';
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
 export function ForestInstallation() {
-  const [years, setYears] = useState<YearRecord[]>(PROTOTYPE_YEARS);
+  const years = ANNUAL_YEARS;
+  const [regionId, setRegionId] = useState(DEFAULT_REGION);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [immersive, setImmersive] = useState(false);
@@ -35,21 +33,18 @@ export function ForestInstallation() {
 
   const mean = baselineMean(years);
   const year = years[index] ?? years[0]!;
+  const regionalYear = getAnnualRegion(year.year, regionId);
 
   // live values for the animation loop
-  const live = useRef({ years, index, mean, immersive });
-  live.current = { years, index, mean, immersive };
+  const live = useRef({ years, index, mean, immersive, regionId });
+  live.current = { years, index, mean, immersive, regionId };
 
   const wallRef = useRef<HTMLDivElement>(null);
   const mapEl = useRef<HTMLDivElement>(null);
   const tlEl = useRef<HTMLCanvasElement>(null);
   const fieldEl = useRef<HTMLCanvasElement>(null);
-  const mapApi = useRef<{ show: (y: YearRecord) => void; resize: () => void } | null>(null);
+  const mapApi = useRef<{ show: (y: YearRecord, selected: number) => void; resize: () => void } | null>(null);
   const audio = useRef<{ ctx: AudioContext; set: (vhi: number, breath: number, stress: number) => void } | null>(null);
-
-  useEffect(() => {
-    loadYears().then(setYears);
-  }, []);
 
   // ---------- PANEL 1: map ----------
   useEffect(() => {
@@ -67,32 +62,44 @@ export function ForestInstallation() {
         "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg",
         { maxZoom: 18, opacity: 0.18, className: "forest-contours" },
       ).addTo(map);
-      const bounds = L.latLngBounds(PLACE_BOUNDS);
-      let paint: import("leaflet").Layer | null = null;
+      const bounds = L.latLngBounds(SWITZERLAND_BOUNDS);
+      const outline = getComputedStyle(document.documentElement).getPropertyValue('--forest-ink').trim();
+      const polygons = MAP_REGIONS.map((region) => {
+        const polygon = L.polygon(region.rings, { weight: 1, fillOpacity: 0.3 }).addTo(map as import('leaflet').Map);
+        polygon.on('click', () => setRegionId(region.id));
+        const path = polygon.getElement();
+        if (path) {
+          path.setAttribute('tabindex', '0');
+          path.setAttribute('role', 'button');
+          path.setAttribute('aria-label', `Select ${regionLabel(region.id)}`);
+          path.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault(); event.stopPropagation(); setRegionId(region.id);
+            }
+          });
+        }
+        return { id: region.id, polygon };
+      });
       mapApi.current = {
-        show: (y) => {
+        show: (y, selected) => {
           if (!map) return;
-          if (paint) map.removeLayer(paint);
-          paint = null;
-          if (y.status === "not-yet") return;
-          paint = L.tileLayer
-            .wms("https://wms.geo.admin.ch/", {
-              layers: SOURCE.layer,
-              format: "image/png",
-              transparent: true,
-              version: "1.3.0",
-              // swisstopo time-enabled layer
-              ...({ item: y.day + "T235959" } as object),
-              opacity: 0.72,
-            })
-            .addTo(map);
+          polygons.forEach(({ id, polygon }) => {
+            const annual = getAnnualRegion(y.year, id);
+            const color = annual?.vhi != null ? rgb(vhiColor(annual.vhi)) : outline;
+            polygon.setStyle({ color: id === selected ? outline : color, fillColor: color,
+              weight: id === selected ? 2.5 : 0.7, fillOpacity: annual?.vhi != null ? 0.42 : 0,
+              dashArray: annual?.vhi == null ? '3 5' : undefined });
+            polygon.getElement()?.setAttribute('aria-pressed', String(id === selected));
+            if (id === selected) polygon.bringToFront();
+          });
         },
         resize: () => map?.invalidateSize(),
       };
       setTimeout(() => {
         map?.invalidateSize();
         map?.fitBounds(bounds, { padding: [28, 28] });
-        mapApi.current?.show(live.current.years[live.current.index]!);
+        const currentYear = live.current.years[live.current.index];
+        if (currentYear) mapApi.current?.show(currentYear, live.current.regionId);
       }, 120);
     });
     return () => {
@@ -103,14 +110,13 @@ export function ForestInstallation() {
   }, []);
 
   useEffect(() => {
-    mapApi.current?.show(year);
-  }, [year]);
+    mapApi.current?.show(year, regionId);
+  }, [year, regionId]);
 
   // ---------- playback ----------
   useEffect(() => {
     if (!playing) return;
-    const wait = year.vhi == null ? 700 : 2600;
-    const t = setTimeout(() => setIndex((i) => (i + 1) % years.length), wait);
+    const t = setTimeout(() => setIndex((i) => (i + 1) % years.length), YEAR_DURATION_MS);
     return () => clearTimeout(t);
   }, [playing, index, years.length, year.vhi]);
 
@@ -197,12 +203,6 @@ export function ForestInstallation() {
           }
           tlctx.stroke();
           tlctx.restore();
-          if (y.status === "not-yet") {
-            tlctx.setLineDash([2, 5]);
-            tlctx.strokeStyle = "rgba(120,220,160,0.5)";
-            tlctx.strokeRect(x0 + 0.5, 2.5, bw - 2, bh - 1);
-            tlctx.setLineDash([]);
-          }
         } else {
           const base = vhiColor(y.vhi);
           const g = tlctx.createLinearGradient(0, 2, 0, 2 + bh);
@@ -428,6 +428,7 @@ export function ForestInstallation() {
         e.preventDefault();
         setPlaying((p) => !p);
       }
+      if ((e.target as HTMLElement)?.closest('select, input, [role="button"]')) return;
       if (e.key === "ArrowRight") setIndex((i) => Math.min(live.current.years.length - 1, i + 1));
       if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
     };
@@ -479,21 +480,16 @@ export function ForestInstallation() {
         </section>
 
         <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
-          <ForestCanvas regionId={39} vhi={year.vhi} rain={0} airTemp={10} flow={0} />
+          <ForestCanvas regionId={regionId} vhi={regionalYear?.vhi} rain={0} airTemp={10} flow={0} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
 
         <section className="forest-sheet forest-sheet-field" aria-label="The forest breathes">
           <canvas ref={fieldEl} className="forest-canvas" />
-          <div className="forest-brand">
-            Forest
-            <br />
-            {first} — {last}
-          </div>
           <div className="forest-spine">03 · The forest breathes</div>
           <div className="forest-imm-year" aria-live="polite">
             <span>{year.year}</span>
-            <small>{year.vhi != null ? `VHI ${year.vhi} · ${band(year.vhi)}` : statusLabel(year)}</small>
+            <small>{year.vhi != null ? `VHI ${year.vhi.toFixed(1)} · ${band(year.vhi)}` : statusLabel(year)}</small>
           </div>
         </section>
       </div>
@@ -503,30 +499,38 @@ export function ForestInstallation() {
           ref={tlEl}
           className="forest-tl forest-clickable"
           onClick={pickYear}
-          aria-label={`Timeline ${first} to ${last}, one band per August; click a year`}
+          tabIndex={0}
+          role="slider"
+          aria-valuemin={first}
+          aria-valuemax={last}
+          aria-valuenow={year.year}
+          aria-label={`Timeline ${first} to ${last}, annual Swiss VHI`}
         />
         <div className="forest-bar-row">
-          <button type="button" onClick={() => setPlaying((p) => !p)}>
+          <Button variant="ghost" type="button" onClick={() => setPlaying((p) => !p)}>
             {playing ? "Pause" : "Play"}
-          </button>
+          </Button>
           <span className="forest-year">{year.year}</span>
-          <button type="button" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
+          <Button variant="ghost" type="button" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
             Sound {sound ? "on" : "off"}
-          </button>
-          <button type="button" onClick={() => setLegend((l) => !l)} aria-expanded={legend} className="forest-only-panels">
+          </Button>
+          <select className="forest-region forest-only-panels" aria-label="Canopy region" value={regionId} onChange={(event) => setRegionId(Number(event.target.value))}>
+            {AVAILABLE_REGION_IDS.map((id) => <option key={id} value={id}>{regionLabel(id)}</option>)}
+          </select>
+          <Button variant="ghost" type="button" onClick={() => setLegend((l) => !l)} aria-expanded={legend} className="forest-only-panels">
             Legend
-          </button>
+          </Button>
           <a className="forest-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
             Source: swissEO VHI
           </a>
           {immersive ? (
-            <button type="button" onClick={exitImmersive}>
+            <Button variant="ghost" type="button" onClick={exitImmersive}>
               Exit · Esc
-            </button>
+            </Button>
           ) : (
-            <button type="button" className="forest-enter" onClick={enterImmersive}>
+            <Button variant="ghost" type="button" className="forest-enter" onClick={enterImmersive}>
               Enter immersive mode
-            </button>
+            </Button>
           )}
           <ZauberparkConcept
             source={fieldEl}
@@ -543,7 +547,7 @@ export function ForestInstallation() {
       {legend && !immersive && (
         <aside className="forest-legend">
           <p>
-            <b>VHI</b> Vegetation Health Index · colour & intensity of the landscape
+            <b>VHI</b> Vegetation Health Index · annual regional means on the map and Canopy; equal-weight mean of all 38 regions in the breathing field and timeline.
           </p>
           <p>
             <b>VCI</b> Vegetation Condition Index · movement & flow — <em>not connected yet; movement follows VHI</em>
@@ -552,8 +556,10 @@ export function ForestInstallation() {
             <b>TCI</b> Temperature Condition Index · sound rhythm — <em>not connected yet</em>
           </p>
           <p className="forest-legend-note">
-            Values shown are carried over from the prototype and are not yet verified against the official source. Grey
-            hatched years have no valid observation; 2026 is not yet observed. The breathing and the sound are artistic
+            Supplied swisstopo monthly observations, averaged over calendar months. Internal missing months are linearly
+            interpolated within each region; no extrapolation. Ten regions lack January 1991 and use eleven available months.
+            National means weight regions equally, not by forest area. Playback covers 1991–2025 at five seconds per year;
+            January–October 2026 remains in the source but is excluded as incomplete. The breathing and the sound are artistic
             interpretations — the data does not measure respiration, and no forest sound is recorded.
           </p>
         </aside>
