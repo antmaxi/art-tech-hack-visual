@@ -55,7 +55,7 @@ export function vhiColor(v: number | null): number[] {
   for (let i = 1; i < STOPS.length; i++) {
     if (v <= STOPS[i][0]) {
       const t = (v - STOPS[i - 1][0]) / (STOPS[i][0] - STOPS[i - 1][0]);
-      return STOPS[i - 1][1].map((c, k) => Math.round(c + (STOPS[i][1][k] - c) * t));
+      return STOPS[i - 1][1].map((c, k) => Math.round(c + ((STOPS[i][1][k] ?? c) - c) * t));
     }
   }
   return STOPS[STOPS.length - 1][1];
