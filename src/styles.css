@@ -216,6 +216,10 @@ body { background: var(--forest-wall); }
 .is-immersive .forest-panels { inset: 0; gap: 0; }
 .is-immersive .forest-sheet-side { flex-grow: 0.0001; opacity: 0; pointer-events: none; }
 .is-immersive .forest-sheet-field { outline-color: transparent; }
+.is-immersive .forest-sheet-canopy { position: absolute; inset: 0; z-index: 1; flex-grow: 1; opacity: 1; pointer-events: auto; outline-color: transparent; mix-blend-mode: screen; animation: immersive-canopy-arrive 1.4s var(--ease-breath) both; }
+.is-immersive .forest-sheet-field .forest-imm-year { z-index: 2; }
+@keyframes immersive-canopy-arrive { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .is-immersive .forest-sheet-canopy { animation: none; } }
 .is-immersive .forest-cap, .is-immersive .forest-spine, .is-immersive .forest-only-panels { opacity: 0; display: none; }
 .is-immersive .forest-imm-year { opacity: 0.85; }
 .is-immersive .forest-bar { left: 50%; right: auto; transform: translateX(-50%); bottom: 24px; height: 44px; width: min(720px, calc(100% - 48px)); padding: 0 20px; background: oklch(0 0 0 / 0.45); backdrop-filter: blur(6px); }

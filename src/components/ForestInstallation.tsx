@@ -6,6 +6,7 @@ import { ZauberparkConcept } from "@/components/ZauberparkConcept";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
 import { AVAILABLE_REGION_IDS, getAnnualRegion, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
+import { canopyAnnualVhi } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { DEFAULT_REGION, regionLabel } from "@/lib/vhi-source";
 
@@ -26,7 +27,8 @@ export function ForestInstallation() {
 
   const mean = baselineMean(years);
   const year = years[index] ?? years[0]!;
-  const regionalYear = getAnnualRegion(year.year, regionId);
+  const canopyVhi = canopyAnnualVhi(year.year, regionId, immersive);
+  const immersiveTerrainRegion = useRef(regionId);
 
   // live values for the animation loop
   const live = useRef({ years, index, mean, immersive, regionId });
@@ -415,9 +417,10 @@ export function ForestInstallation() {
 
   // ---------- immersive ----------
   const enterImmersive = useCallback(() => {
+    immersiveTerrainRegion.current = regionId;
     setImmersive(true);
     document.documentElement.requestFullscreen?.().catch(() => {});
-  }, []);
+  }, [regionId]);
   const exitImmersive = useCallback(() => {
     setImmersive(false);
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -483,7 +486,7 @@ export function ForestInstallation() {
         </section>
 
         <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
-          <ForestCanvas regionId={regionId} vhi={regionalYear?.vhi ?? null} rain={0} airTemp={10} flow={0} />
+          <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} dataScope={immersive ? "national" : "regional"} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
 
