@@ -136,11 +136,11 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
     // Switching to still preserves the last rendered frame without resetting the artwork.
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [source, animated]);
-  return <canvas ref={canvas} className={`zauber-projection ${styles['projection']}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup" />;
+  }, [source, canopyHost, animated]);
+  return <canvas ref={canvas} className={`zauber-projection ${styles['projection']}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup: the Canopy visualisation above, the breathing topographic field below" />;
 }
 
-function ConceptScene({ source, sound, onToggleSound, year }: Props) {
+function ConceptScene({ source, canopyHost, sound, onToggleSound, year }: Props) {
   const [animated, setAnimated] = useState(() => !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [stillYear, setStillYear] = useState(year);
   return (
@@ -148,7 +148,7 @@ function ConceptScene({ source, sound, onToggleSound, year }: Props) {
       <div className="zauber-environment" aria-hidden="true">
         <div className={`zauber-stage ${styles['stage']}`}>
           <img src={setting} width={1800} height={1200} alt="" className="zauber-setting" />
-          <Projection source={source} animated={animated} />
+          <Projection source={source} canopyHost={canopyHost} animated={animated} />
         </div>
       </div>
       <header className="zauber-heading">
