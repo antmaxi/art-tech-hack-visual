@@ -315,7 +315,7 @@ export function ForestInstallation() {
       fctx.globalCompositeOperation = "lighter";
       const speed = 0.0006 + clamp(motion / 100) * 0.0012;
       const pulse = 0.55 + breath * 0.45;
-      const sz = Math.max(1, W / 900);
+      const sz = Math.max(1.5, W / 600);
       for (let k = 0; k < P; k++) {
         const a = noise(px[k] * 3 + clock, py[k] * 3) * Math.PI * (2 + mStress * 3);
         px[k] += Math.cos(a) * speed * (1 + breath * 0.5);
@@ -491,7 +491,7 @@ export function ForestInstallation() {
         </section>
 
         <section className="forest-sheet forest-sheet-side" aria-label="Time and memory">
-          <canvas ref={timeEl} className="forest-canvas forest-clickable" onClick={pickYear} />
+          <canvas ref={timeEl} className="forest-canvas forest-timeline forest-clickable" onClick={pickYear} />
           <div className="forest-spine">02 · Time / Memory</div>
           <div className="forest-cap">
             <b>
