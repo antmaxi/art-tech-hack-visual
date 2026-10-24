@@ -62,4 +62,12 @@ describe('all-Switzerland selection', () => {
     expect(isNationalScope(ALL_SWITZERLAND, false)).toBe(true);
     expect(isNationalScope(47, false)).toBe(false);
   });
+
+  it('opens on all of Switzerland so the Canopy starts at the national mean', async () => {
+    const { DEFAULT_SELECTION, canopyAnnualVhi, isNationalScope } = await import('@/lib/canopy-scope');
+    expect(isNationalScope(DEFAULT_SELECTION, false)).toBe(true);
+    for (const year of ANNUAL_YEARS) {
+      expect(canopyAnnualVhi(year.year, DEFAULT_SELECTION, false)).toBe(nationalAnnual(year.year).vhi);
+    }
+  });
 });

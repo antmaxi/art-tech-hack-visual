@@ -4,6 +4,9 @@ import { getRegionVhi } from '@/lib/vhi-source';
 /** Selection value meaning "all of Switzerland" (no single region). */
 export const ALL_SWITZERLAND = 0;
 
+/** What the interface opens on: the whole country, not one region. */
+export const DEFAULT_SELECTION = ALL_SWITZERLAND;
+
 /** National data applies in immersion or when all of Switzerland is selected. */
 export const isNationalScope = (regionId: number, immersive: boolean) => immersive || regionId === ALL_SWITZERLAND;
 

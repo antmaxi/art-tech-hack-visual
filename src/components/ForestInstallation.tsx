@@ -7,15 +7,15 @@ import arthack from "@/assets/arthack.mp3.asset.json";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
 import { AVAILABLE_REGION_IDS, audioTimeForIndex, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
-import { ALL_SWITZERLAND, canopyAnnualVhi, isNationalScope } from "@/lib/canopy-scope";
+import { ALL_SWITZERLAND, canopyAnnualVhi, DEFAULT_SELECTION, isNationalScope } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
-import { DEFAULT_REGION, regionLabel } from "@/lib/vhi-source";
+import { regionLabel } from "@/lib/vhi-source";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
 export function ForestInstallation() {
   const years = ANNUAL_YEARS;
-  const [regionId, setRegionId] = useState(DEFAULT_REGION);
+  const [regionId, setRegionId] = useState(DEFAULT_SELECTION);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [immersive, setImmersive] = useState(false);
