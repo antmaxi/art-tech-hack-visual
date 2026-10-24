@@ -7,7 +7,7 @@ import arthack from "@/assets/arthack.mp3.asset.json";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
 import { AVAILABLE_REGION_IDS, audioTimeForIndex, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
-import { canopyAnnualVhi } from "@/lib/canopy-scope";
+import { ALL_SWITZERLAND, canopyAnnualVhi, isNationalScope } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { DEFAULT_REGION, regionLabel } from "@/lib/vhi-source";
 
@@ -473,7 +473,7 @@ export function ForestInstallation() {
         </section>
 
         <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy" ref={canopyHostEl}>
-          <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} dataScope={immersive ? "national" : "regional"} />
+          <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} dataScope={isNationalScope(regionId, immersive) ? "national" : "regional"} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
 
@@ -513,6 +513,7 @@ export function ForestInstallation() {
             value={regionId}
             onChange={(event) => setRegionId(Number(event.target.value))}
           >
+            <option value={ALL_SWITZERLAND}>All of Switzerland</option>
             {AVAILABLE_REGION_IDS.map((id) => (
               <option key={id} value={id}>
                 {regionLabel(id)}
