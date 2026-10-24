@@ -486,7 +486,7 @@ export function ForestInstallation() {
           <div className="forest-spine">01 · Place</div>
         </section>
 
-        <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
+        <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy" ref={canopyHostEl}>
           <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} dataScope={immersive ? "national" : "regional"} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
@@ -556,6 +556,7 @@ export function ForestInstallation() {
           )}
           <ZauberparkConcept
             source={fieldEl}
+            canopyHost={canopyHostEl}
             container={wallRef}
             open={zauberpark}
             onOpenChange={setZauberpark}
