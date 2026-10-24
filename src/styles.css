@@ -191,7 +191,6 @@ body { background: var(--forest-wall); }
 .k-next { outline: 1px dashed var(--forest-emerald); }
 .forest-brand { top: 16px; right: 16px; text-align: right; font-size: 10px; line-height: 1.6; color: var(--forest-ink); }
 .forest-imm-year { left: 50%; bottom: 9vh; transform: translateX(-50%); text-align: center; opacity: 0; }
-.forest-imm-year span { display: block; font-family: var(--font-display); font-size: clamp(48px, 9vw, 140px); letter-spacing: 0.04em; line-height: 1; color: var(--forest-ink); }
 .forest-imm-year small { font-size: 11px; color: var(--forest-dim); }
 
 .forest-bar { position: absolute; left: 20px; right: 20px; bottom: 0; height: 56px; display: flex; align-items: center; gap: 22px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--forest-dim); transition: opacity 0.8s ease, background 1s; z-index: 1000; }
