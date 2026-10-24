@@ -20,10 +20,10 @@ function hash(n: number) {
 
 /**
  * VHI for a region, as health 0..1 (VHI / 100).
- * When an observed August VHI (0..100) is passed, it becomes the field's mean
+  * When an annual regional VHI (0..100) is passed, it becomes the field's mean
  * and the result is no longer hypothetical. Without one, the field falls back
  * to a stable per-region mean plus a smooth spatial field — clearly labelled
- * hypothetical. Missing years are never interpolated.
+ * hypothetical. Monthly interpolation and annual aggregation occur in annual-vhi.
  */
 export function getRegionVhi(id: number, vhi?: number | null) {
   const observed = vhi != null;
