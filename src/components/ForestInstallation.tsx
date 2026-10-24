@@ -255,38 +255,42 @@ export function ForestInstallation() {
       // VHI → colour/intensity; VCI → motion (falls back to VHI until connected)
       const target = y.vhi ?? m;
       const motionTarget = y.vci ?? y.vhi ?? m;
-      shown += (target - shown) * 0.02;
-      motion += (motionTarget - motion) * 0.02;
+      // gentle easing keeps year-to-year transitions smooth, especially in Immersion Mode
+      shown += (target - shown) * 0.012;
+      motion += (motionTarget - motion) * 0.012;
       // calibrate against the observed record: worst year → 0, best year → 1
       const health = normalizeVhi(shown);
       const motionHealth = normalizeVhi(motion);
       const stress = 1 - health;
       const mStress = 1 - motionHealth;
 
-      // breathing: slow and deep at peak health (~9.5s), fast and shallow in drought (~2s)
+      // breathing: very slow and deep at peak health (~23s), fast and shallow in drought (~2s)
       phase += breathRate(motionHealth) * (1 + mStress * 0.9 * noise(clock * 2, 3.3));
-      const hold = mStress > 0.3 ? clamp(noise(clock * 3, 9.1) * 3 * mStress) : 0; // interruptions
+      const hold = clamp((mStress - 0.3) * 2.5, 0, 1) * clamp(noise(clock * 3, 9.1) * 3 * mStress, 0, 1); // interruptions
       const breath = Math.sin(phase) * (1 - hold) * (0.55 + health * 0.45 - mStress * 0.3);
-      clock += 0.0022 + mStress * 0.004;
+      clock += 0.0012 + mStress * 0.006;
 
       const w = low.width;
       const h = low.height;
       const data = buffer.data;
-      const zoom = 1 - breath * 0.06;
+      // the inhale/exhale swells the whole field: dramatic at peak health, shallow in drought
+      const zoom = 1 - breath * (0.03 + health * 0.15);
       const warp = 1.1 + mStress * 2.6;
+      // healthy years form large soft masses; drought breaks into tight agitated detail
+      const blobFreq = 1.4 + stress * 1.4;
       for (let j = 0; j < h; j++) {
         for (let i = 0; i < w; i++) {
           const u = ((i / w - 0.5) * zoom + 0.5) * (w / h);
           const v = (j / h - 0.5) * zoom + 0.5;
-          const q = noise(u * 2.2 + clock, v * 2.2);
-          const r = noise(u * 2.2 + 4.1, v * 2.2 + clock * 0.8);
-          const e = (noise(u * 1.6 + q * warp, v * 1.6 + r * warp + clock * 0.5) + 1) * 0.5;
+          const q = noise(u * blobFreq + clock, v * blobFreq);
+          const r = noise(u * blobFreq + 4.1, v * blobFreq + clock * 0.8);
+          const e = (noise(u * blobFreq * 0.75 + q * warp, v * blobFreq * 0.75 + r * warp + clock * 0.5) + 1) * 0.5;
           const fine = (noise(u * 9 + 8, v * 9 + clock) + 1) * 0.5;
-          // topographic contours
-          const c = (e * 14 + clock * 0.6) % 1;
+          // topographic contours: few broad rings at peak health, many tight rings in drought
+          const c = (e * (9 + stress * 9) + clock * 0.6) % 1;
           const contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 4));
-          // fragmentation under stress
-          const frag = stress > 0.15 && fine < stress * 0.45 ? 0.15 : 1;
+          // fragmentation under stress (continuous, so year transitions never pop)
+          const frag = 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1);
           const lum = (0.08 + e * e * 0.9) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
           // continuous gradient: deep emerald at peak health, dark scorched rust in drought
           let R = 6 + lum * (34 + stress * 130);
@@ -311,7 +315,7 @@ export function ForestInstallation() {
 
       // luminous particles
       fctx.globalCompositeOperation = "lighter";
-      const speed = 0.0005 + mStress * 0.0022;
+      const speed = 0.0003 + mStress * 0.003;
       const pulse = 0.55 + breath * 0.45;
       const sz = Math.max(1.5, W / 600);
       for (let k = 0; k < P; k++) {
