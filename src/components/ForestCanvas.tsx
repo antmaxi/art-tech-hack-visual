@@ -133,7 +133,6 @@ export function ForestCanvas({
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const live = useRef({ rain, airTemp, flow, vhi, dataScope });
-  const api = useRef<{ clear: () => void }>({ clear: () => {} });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -295,7 +294,7 @@ export function ForestCanvas({
         };
       });
 
-      // pointer: hover wakes the canopy, drag is a gust, a tap plants a grove
+      // pointer: hover wakes the canopy, drag is a gust
       let pointer: { x: number; y: number; down: boolean; moved: boolean } | null = null;
       const toLocal = (e: PointerEvent) => {
         const r = canvas.getBoundingClientRect();
@@ -311,18 +310,7 @@ export function ForestCanvas({
           pointer.moved = true;
         pointer = { ...l, down: pointer?.down ?? false, moved: pointer?.moved ?? false };
       };
-      const plant = (x: number, y: number) => {
-        for (let k = 0; k < 9; k++) {
-          const a = Math.random() * Math.PI * 2;
-          const d = 16 + Math.random() * 58;
-          const px = x + Math.cos(a) * d;
-          const py = y + Math.sin(a) * d;
-          if (px < 0 || py < 0 || px >= W || py >= H) continue;
-          trees.push(tree(0, true, px, py));
-        }
-      };
       const up = () => {
-        if (pointer && pointer.down && !pointer.moved) plant(pointer.x, pointer.y);
         if (pointer) pointer.down = false;
       };
       const leave = () => (pointer = null);
@@ -336,11 +324,7 @@ export function ForestCanvas({
       canvas.addEventListener("pointermove", move);
       canvas.addEventListener("pointerup", up);
       canvas.addEventListener("pointerleave", leave);
-      api.current.clear = () => {
-        for (let i = trees.length - 1; i >= 0; i--) if (trees[i]!.planted) trees.splice(i, 1);
-        ctx.globalAlpha = 1;
-        ctx.drawImage(ground, 0, 0);
-      };
+
 
       let t = 0;
       let f = 0;
@@ -461,18 +445,11 @@ export function ForestCanvas({
         ref={ref}
         className="forest-canvas absolute inset-0 h-full w-full"
         tabIndex={0}
-        aria-label={`Interactive painting of ${dataScope === "national" ? "Switzerland’s" : regionLabel(regionId)} forests, breathing. Tap to plant a grove; Delete or Backspace removes your groves.`}
+        aria-label={`Interactive painting of ${dataScope === "national" ? "Switzerland’s" : regionLabel(regionId)} forests, breathing.`}
         data-region-id={regionId}
         data-scope={dataScope}
         data-annual-vhi={vhi ?? 'missing'}
         onPointerDown={() => ref.current?.focus({ preventScroll: true })}
-        onKeyDown={(event) => {
-          if (event.key === "Delete" || event.key === "Backspace") {
-            event.preventDefault();
-            event.stopPropagation();
-            api.current.clear();
-          }
-        }}
       />
       {!ready && (
         <p className="forest-loading font-display text-xl italic">
