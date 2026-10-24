@@ -491,7 +491,6 @@ export function ForestInstallation() {
           <canvas ref={fieldEl} className="forest-canvas" />
           <div className="forest-spine">03 · The forest breathes</div>
           <div className="forest-imm-year" aria-live="polite">
-            <span>{year.year}</span>
             <small>{year.vhi != null ? `VHI ${year.vhi.toFixed(1)} · ${band(year.vhi)}` : statusLabel(year)}{PRELIMINARY_YEARS[year.year] ? " · preliminary Jan–Oct" : ""}</small>
           </div>
         </section>
