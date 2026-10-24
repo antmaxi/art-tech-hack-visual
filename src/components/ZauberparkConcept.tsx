@@ -71,6 +71,14 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
         fade.addColorStop(0.78,"white");
         fade.addColorStop(1,"transparent");
         ctx.fillStyle=fade; ctx.fillRect(0,0,target.width,target.height);
+        ctx.save();
+        ctx.translate(1160,1045); ctx.scale(1,0.25);
+        const footprint = ctx.createRadialGradient(0,0,0,0,0,630);
+        footprint.addColorStop(0,"white");
+        footprint.addColorStop(0.6,"white");
+        footprint.addColorStop(1,"transparent");
+        ctx.fillStyle=footprint; ctx.fillRect(-1800,-4800,3600,9600);
+        ctx.restore();
         ctx.globalCompositeOperation = "source-over";
         previous = time;
       }
