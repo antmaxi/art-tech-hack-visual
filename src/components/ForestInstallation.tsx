@@ -33,7 +33,7 @@ export function ForestInstallation() {
   const [legend, setLegend] = useState(false);
 
   const mean = baselineMean(years);
-  const year = years[index];
+  const year = years[index] ?? years[0]!;
 
   // live values for the animation loop
   const live = useRef({ years, index, mean, immersive });
@@ -102,7 +102,7 @@ export function ForestInstallation() {
       setTimeout(() => {
         map?.invalidateSize();
         map?.fitBounds(bounds, { padding: [28, 28] });
-        mapApi.current?.show(live.current.years[live.current.index]);
+        mapApi.current?.show(live.current.years[live.current.index]!);
       }, 120);
     });
     return () => {
@@ -250,7 +250,7 @@ export function ForestInstallation() {
     const drawField = () => {
       if (!buffer) return;
       const { years: ys, index: idx, mean: m } = live.current;
-      const y = ys[idx];
+      const y = ys[idx]!;
       // VHI → colour/intensity; VCI → motion (falls back to VHI until connected)
       const target = y.vhi ?? m;
       const motionTarget = y.vci ?? y.vhi ?? m;
@@ -317,19 +317,19 @@ export function ForestInstallation() {
       const pulse = 0.55 + breath * 0.45;
       const sz = Math.max(1.5, W / 600);
       for (let k = 0; k < P; k++) {
-        const a = noise(px[k] * 3 + clock, py[k] * 3) * Math.PI * (2 + mStress * 3);
+        const a = noise(px[k]! * 3 + clock, py[k]! * 3) * Math.PI * (2 + mStress * 3);
         px[k] += Math.cos(a) * speed * (1 + breath * 0.5);
         py[k] += Math.sin(a) * speed * (1 + breath * 0.5);
         pl[k] -= 0.004 + mStress * 0.01;
-        if (pl[k] <= 0 || px[k] < 0 || px[k] > 1 || py[k] < 0 || py[k] > 1) {
+        if (pl[k]! <= 0 || px[k]! < 0 || px[k]! > 1 || py[k]! < 0 || py[k]! > 1) {
           px[k] = Math.random();
           py[k] = Math.random();
           pl[k] = 1;
         }
         if (mStress > 0.4 && Math.random() < mStress * 0.3) continue; // flicker
-        const al = Math.sin(pl[k] * Math.PI) * pulse * (0.25 + health * 0.6);
+        const al = Math.sin(pl[k]! * Math.PI) * pulse * (0.25 + health * 0.6);
         fctx.fillStyle = stress > vigor ? `rgba(230,170,110,${al})` : `rgba(150,255,190,${al})`;
-        fctx.fillRect(px[k] * W, py[k] * H, sz, sz);
+        fctx.fillRect(px[k]! * W, py[k]! * H, sz, sz);
       }
       fctx.globalCompositeOperation = "source-over";
       // vignette for depth
@@ -405,8 +405,8 @@ export function ForestInstallation() {
         filter.frequency.setTargetAtTime(250 + vhi * 14, now, 0.4);
         air.gain.setTargetAtTime(0.04 + Math.max(0, breath) * 0.12, now, 0.15);
         bp.frequency.setTargetAtTime(500 + (breath + 1) * 400, now, 0.2);
-        oscs[1].detune.setTargetAtTime(stress * 45, now, 0.5);
-        oscs[2].detune.setTargetAtTime(-stress * 30, now, 0.5);
+        oscs[1]!.detune.setTargetAtTime(stress * 45, now, 0.5);
+        oscs[2]!.detune.setTargetAtTime(-stress * 30, now, 0.5);
       },
     };
     return () => {
@@ -472,8 +472,8 @@ export function ForestInstallation() {
   };
 
   const delta = year.vhi == null ? null : year.vhi - mean;
-  const first = years[0].year;
-  const last = years[years.length - 1].year;
+  const first = years[0]!.year;
+  const last = years[years.length - 1]!.year;
 
   return (
     <div ref={wallRef} className={`forest-wall ${immersive ? "is-immersive" : ""} ${idle ? "is-idle" : ""}`}>
