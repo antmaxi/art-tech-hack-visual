@@ -48,7 +48,7 @@ const STOPS: [number, number[]][] = [
   [52, [52, 110, 70]],
   [64, [28, 150, 96]],
   [80, [70, 210, 140]],
-  [100, [160, 240, 190]],
+  [100, [70, 190, 115]],
 ];
 export function vhiColor(v: number | null): number[] {
   if (v == null) return [38, 40, 38];
@@ -67,8 +67,8 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /**
  * Shared breathing tempo for the field and the Canopy (radians per frame at 60fps).
- * Peak health ≈ 9.5s per breath (slow, meditative); deepest drought ≈ 2s (rapid,
+ * Peak health ≈ 15.5s per breath (very slow, meditative); deepest drought ≈ 2s (rapid,
  * shallow panting), with a smooth nonlinear gradient between. Both panels call this
  * so their movement stays synchronised in Immersion Mode.
  */
-export const breathRate = (health: number) => 0.011 + (1 - clamp01(health)) ** 2 * 0.041;
+export const breathRate = (health: number) => 0.0068 + (1 - clamp01(health)) ** 2 * 0.046;
