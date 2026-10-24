@@ -45,19 +45,13 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
       plate.putImageData(pixels, 0, 0);
     };
     // Geometry belongs only to this reference mockup, never to the shared artwork.
-    type Surface = { corners: number[][]; alpha: number; bend: number };
+    type Surface = { corners: number[][]; alpha: number; bend: number; plate: "canopy" | "field" };
     const surfaces: Surface[] = [
-      // Forest floor and path, widening from the vanishing point toward the camera.
-      { corners: [[650, 720], [950, 720], [1800, 1131], [0, 1131]], alpha: 1, bend: 16 },
-      // Tall trunks carry the projection vertically: Canopy above, field below.
-      { corners: [[222, 0], [398, 0], [415, 1000], [185, 1000]], alpha: 0.9, bend: 8 },
-      { corners: [[478, 0], [575, 0], [600, 850], [455, 850]], alpha: 0.85, bend: 7 },
-      { corners: [[637, 0], [734, 0], [760, 760], [615, 760]], alpha: 0.8, bend: 6 },
-      { corners: [[1138, 0], [1257, 0], [1285, 950], [1120, 950]], alpha: 0.85, bend: 8 },
-      { corners: [[1280, 0], [1365, 0], [1395, 860], [1265, 860]], alpha: 0.7, bend: 6 },
-      // Upper canopy foliage and the left forest edge.
-      { corners: [[380, 0], [1420, 0], [1520, 430], [330, 460]], alpha: 0.5, bend: 28 },
-      { corners: [[0, 0], [222, 0], [170, 700], [0, 760]], alpha: 0.3, bend: 20 },
+      // Smooth path and ground, widening from the vanishing point toward the camera: topographic field.
+      { corners: [[790, 732], [905, 732], [1480, 1131], [20, 1131]], alpha: 1, bend: 10, plate: "field" },
+      // Shrub walls on both sides of the path: Canopy light following the foliage.
+      { corners: [[0, 60], [730, 470], [790, 740], [0, 1040]], alpha: 0.95, bend: 26, plate: "canopy" },
+      { corners: [[905, 460], [1800, 60], [1800, 1131], [1480, 1131]], alpha: 0.95, bend: 26, plate: "canopy" },
     ];
     const surface = (corners: number[][], u: number, v: number, bend: number) => {
       const [a, b, c, d] = corners;
@@ -93,9 +87,6 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
     };
     let frame = 0;
     let previous = -100;
-    // Vertical split of every projection surface: Canopy above, breathing field below, dark seam between.
-    const BAND_END = 0.45;
-    const BAND_START = 0.47;
     const draw = (time: number) => {
       const original = source.current;
       const canopyCanvas = canopyHost?.current?.querySelector("canvas");
@@ -108,11 +99,8 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
             const u = column/20, v = row/12, du = 1/20, dv = 1/12;
-            const mid = v + dv/2;
-            let plate = fieldLight, v0 = 0, vScale = 1;
-            if (mid < BAND_END) { plate = hasCanopy ? canopyLight : fieldLight; v0 = 0; vScale = 1/BAND_END; }
-            else if (mid > BAND_START) { plate = fieldLight; v0 = -BAND_START/(1-BAND_START); vScale = 1/(1-BAND_START); }
-            else continue; // the seam stays unlit, separating the two stacked projections
+            const plate = patch.plate === "canopy" && hasCanopy ? canopyLight : fieldLight;
+            const v0 = 0, vScale = 1;
             tile(plate,patch,u,v,du,dv,false,v0,vScale);
             tile(plate,patch,u,v,du,dv,true,v0,vScale);
           }
@@ -122,11 +110,11 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
         ctx.globalCompositeOperation = "destination-out";
         const exclusions = [
           // The physical Zauberpark sign stays free of projected light.
-          [[1400,230],[1730,230],[1730,960],[1400,960]],
+          [[1462,318],[1680,318],[1680,850],[1462,850]],
           // Visitors walking the path remain unprojected silhouettes.
-          [[90,650],[340,650],[360,1131],[60,1131]],
-          [[490,680],[675,680],[700,1020],[470,1020]],
-          [[715,690],[905,690],[915,840],[705,840]],
+          [[556,610],[680,610],[680,910],[556,910]],
+          [[735,632],[802,632],[802,795],[735,795]],
+          [[824,650],[874,650],[874,768],[824,768]],
         ];
         for (const polygon of exclusions) {
           ctx.beginPath();
@@ -142,7 +130,7 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
   }, [source, canopyHost, animated]);
-  return <canvas ref={canvas} className={`zauber-projection ${styles['projection']}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup: the Canopy visualisation above, the breathing topographic field below" />;
+  return <canvas ref={canvas} className={`zauber-projection ${styles['projection']}`} aria-label="Live Forest artwork projected in an illustrative festival mockup: the Canopy visualisation on the shrubs beside the path, the topographic field across the path" />;
 }
 
 function ConceptScene({ source, canopyHost, sound, onToggleSound, year }: Props) {
