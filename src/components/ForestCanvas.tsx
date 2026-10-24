@@ -123,13 +123,13 @@ export function ForestCanvas({
   vhi?: number | null;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const live = useRef({ rain, airTemp, flow });
+  const live = useRef({ rain, airTemp, flow, vhi });
   const api = useRef<{ clear: () => void }>({ clear: () => {} });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    live.current = { rain, airTemp, flow };
-  }, [rain, airTemp, flow]);
+    live.current = { rain, airTemp, flow, vhi };
+  }, [rain, airTemp, flow, vhi]);
 
   useEffect(() => {
     let raf = 0;
@@ -137,7 +137,7 @@ export function ForestCanvas({
     let cleanup = () => {};
     const region = getRegion(regionId);
     const { bbox, W, H, toPx } = regionFrame(region);
-    const vhiSrc = getRegionVhi(region.id, vhi);
+    const vhiSrc = getRegionVhi(region.id, live.current.vhi);
     setReady(false);
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
@@ -326,6 +326,7 @@ export function ForestCanvas({
 
       let t = 0;
       let f = 0;
+      let healthVhi = live.current.vhi;
       setReady(true);
 
       const loop = () => {
@@ -339,6 +340,12 @@ export function ForestCanvas({
         ctx.globalAlpha = 1;
 
         const s = live.current;
+        if (healthVhi !== s.vhi) {
+          healthVhi = s.vhi;
+          const source = getRegionVhi(region.id, s.vhi);
+          for (const i of cells) health[i] = source.field((i % W) / W, ((i / W) | 0) / H);
+          for (const tr of trees) tr.health = health[((tr.hy | 0) * W + (tr.hx | 0)) | 0] ?? 0.5;
+        }
         const heat = Math.min(1, Math.max(0, (s.airTemp - 5) / 22));
         const rainDeep = Math.min(0.35, s.rain * 0.18);
         const gust = !!pointer && pointer.down && pointer.moved;
@@ -426,7 +433,7 @@ export function ForestCanvas({
       window.removeEventListener("resize", resize);
       cleanup();
     };
-  }, [regionId, vhi]);
+  }, [regionId]);
 
   return (
     <>
