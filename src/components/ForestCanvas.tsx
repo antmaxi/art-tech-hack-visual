@@ -1,0 +1,493 @@
+import { useEffect, useRef, useState } from "react";
+import { wmsUrlFor } from "@/lib/map-geo";
+import { getRegion, getRegionVhi, regionFrame } from "@/lib/vhi-source";
+
+function cssVar(n: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+}
+
+function loadImg(src: string) {
+  return new Promise<HTMLImageElement>((res, rej) => {
+    const i = new Image();
+    i.crossOrigin = "anonymous";
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = src;
+  });
+}
+
+function rng(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// oklch -> "r,g,b", so the foliage sprites can fade out properly
+function rgb(color: string) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 1;
+  const x = c.getContext("2d")!;
+  x.fillStyle = color;
+  x.fillRect(0, 0, 1, 1);
+  const d = x.getImageData(0, 0, 1, 1).data;
+  return `${d[0]},${d[1]},${d[2]}`;
+}
+
+// one irregular crown: shadow, body and highlights, so a stamp has depth inside it
+function foliage(color: string, seed: number) {
+  const S = 220;
+  const s = document.createElement("canvas");
+  s.width = s.height = S;
+  const c = s.getContext("2d")!;
+  const base = rgb(color);
+  const dark = rgb(cssVar("--forest-shadow"));
+  const light = rgb(cssVar("--river-foam"));
+  const rand = rng(seed);
+  const puff = (x: number, y: number, r: number, tone: string, a: number) => {
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${tone},${a.toFixed(3)})`);
+    g.addColorStop(0.6, `rgba(${tone},${(a * 0.35).toFixed(3)})`);
+    g.addColorStop(1, `rgba(${tone},0)`);
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fill();
+  };
+  const n = 13 + ((rand() * 9) | 0);
+  // the underside, thrown a little down and right
+  for (let i = 0; i < n; i++)
+    puff(
+      S / 2 + (rand() - 0.5) * S * 0.5 + S * 0.05,
+      S / 2 + (rand() - 0.5) * S * 0.4 + S * 0.07,
+      S * (0.1 + rand() * 0.17),
+      dark,
+      0.3,
+    );
+  // the body of the crown
+  for (let i = 0; i < n; i++)
+    puff(
+      S / 2 + (rand() - 0.5) * S * 0.54,
+      S / 2 + (rand() - 0.5) * S * 0.44,
+      S * (0.11 + rand() * 0.19),
+      base,
+      0.3 + rand() * 0.36,
+    );
+  // the light catching the top
+  for (let i = 0; i < 6; i++)
+    puff(
+      S / 2 + (rand() - 0.5) * S * 0.32 - S * 0.07,
+      S / 2 + (rand() - 0.5) * S * 0.26 - S * 0.09,
+      S * (0.05 + rand() * 0.1),
+      light,
+      0.32,
+    );
+  return s;
+}
+
+type Tree = {
+  hx: number;
+  hy: number;
+  x: number;
+  y: number;
+  ox: number;
+  oy: number;
+  rot: number;
+  squash: number;
+  phase: number;
+  base: number;
+  health: number;
+  tone: number;
+  variant: number;
+  growth: number;
+  planted: boolean;
+};
+
+type Speck = { x: number; y: number; phase: number };
+
+export function ForestCanvas({
+  rain,
+  airTemp,
+  flow,
+  regionId,
+}: {
+  regionId: number;
+  rain: number;
+  airTemp: number;
+  flow: number;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const live = useRef({ rain, airTemp, flow });
+  const api = useRef<{ clear: () => void }>({ clear: () => {} });
+  const [ready, setReady] = useState(false);
+  const [groves, setGroves] = useState(0);
+  const [report, setReport] = useState<{ cover: number; stress: number | null; health: number }>({
+    cover: 0,
+    stress: null,
+    health: 0.5,
+  });
+
+  useEffect(() => {
+    live.current = { rain, airTemp, flow };
+  }, [rain, airTemp, flow]);
+
+  useEffect(() => {
+    let raf = 0;
+    let alive = true;
+    let cleanup = () => {};
+    const region = getRegion(regionId);
+    const { bbox, W, H, toPx } = regionFrame(region);
+    const vhiSrc = getRegionVhi(region.id);
+    setReady(false);
+    setGroves(0);
+    const canvas = ref.current!;
+    const ctx = canvas.getContext("2d")!;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let sc = 1;
+    let offx = 0;
+    let offy = 0;
+
+    // the painting fills the screen; the map is scaled up to cover it, never stretched
+    const resize = () => {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      canvas.width = Math.max(1, Math.round(w * dpr));
+      canvas.height = Math.max(1, Math.round(h * dpr));
+      sc = Math.max(w / W, h / H);
+      offx = (w - W * sc) / 2;
+      offy = (h - H * sc) / 2;
+      ctx.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * offx, dpr * offy);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    (async () => {
+      const cover = await loadImg(wmsUrlFor("ch.swisstopo.vec200-landcover", bbox, W, H));
+      if (!alive) return;
+
+      const sheet = (img: HTMLImageElement) => {
+        const c = document.createElement("canvas");
+        c.width = W;
+        c.height = H;
+        const cc = c.getContext("2d")!;
+        cc.drawImage(img, 0, 0);
+        return cc.getImageData(0, 0, W, H).data;
+      };
+      const lc = sheet(cover);
+      // the region's outline, rasterised: only ground inside it grows
+      const mc = document.createElement("canvas");
+      mc.width = W;
+      mc.height = H;
+      const mx = mc.getContext("2d")!;
+      mx.beginPath();
+      for (const ring of region.rings)
+        ring.forEach(([e, n], k) => {
+          const [px, py] = toPx(e!, n!);
+          if (k) mx.lineTo(px, py);
+          else mx.moveTo(px, py);
+        });
+      mx.fill();
+      const mask = mx.getImageData(0, 0, W, H).data;
+
+      // where anything actually grows, and how healthy the satellite finds it
+      const cells: number[] = [];
+      const health = new Float32Array(W * H).fill(0.5);
+      let healthy = 0;
+      let stressed = 0;
+      let sum = 0;
+      for (let i = 0; i < W * H; i++) {
+        if (mask[i * 4 + 3]! < 128 || lc[i * 4 + 3]! < 40) continue;
+        const r = lc[i * 4]!;
+        const g = lc[i * 4 + 1]!;
+        const b = lc[i * 4 + 2]!;
+        if (!(g > r + 10 && g > b + 10)) continue;
+        cells.push(i);
+        const h = vhiSrc.field((i % W) / W, ((i / W) | 0) / H);
+        if (h > 0.6) healthy++;
+        else if (h < 0.4) stressed++;
+        health[i] = h;
+        sum += h;
+      }
+      if (!cells.length) return;
+
+      const deepC = cssVar("--forest-deep");
+      const midC = cssVar("--forest-mid");
+      const dryC = cssVar("--accent");
+      const wakeC = cssVar("--river-warm");
+      const mineC = cssVar("--hydro");
+      const ink = cssVar("--drain");
+
+      // six crowns per tone, so no two trees share a silhouette
+      const set = (color: string, seed: number) =>
+        Array.from({ length: 6 }, (_, k) => foliage(color, seed + k * 977));
+      const deepS = set(deepC, 11);
+      const midS = set(midC, 7000);
+      const dryS = set(dryC, 15000);
+      const wakeS = set(wakeC, 23000);
+      const mineS = set(mineC, 31000);
+
+      // the vegetated ground, as a watercolour wash the crowns sit inside
+      const ground = document.createElement("canvas");
+      ground.width = W;
+      ground.height = H;
+      const gc = ground.getContext("2d")!;
+      gc.fillStyle = cssVar("--background");
+      gc.fillRect(0, 0, W, H);
+      gc.globalAlpha = 0.16;
+      gc.fillStyle = deepC;
+      for (const i of cells) gc.fillRect(i % W, (i / W) | 0, 1, 1);
+      gc.globalAlpha = 1;
+      ctx.globalAlpha = 1;
+      ctx.drawImage(ground, 0, 0);
+
+      const tree = (i: number, planted = false, px?: number, py?: number): Tree => {
+        const x = px ?? i % W;
+        const y = py ?? (i / W) | 0;
+        const h = health[((y | 0) * W + (x | 0)) | 0] ?? 0.5;
+        return {
+          hx: x,
+          hy: y,
+          x,
+          y,
+          ox: (Math.random() - 0.5) * 34,
+          oy: (Math.random() - 0.5) * 34,
+          rot: Math.random() * Math.PI * 2,
+          squash: 0.7 + Math.random() * 0.4,
+          phase: x * 0.006 + Math.random() * 0.7,
+          base: planted ? 12 + Math.random() * 14 : 20 + Math.random() * 30,
+          health: h,
+          tone: Math.random(),
+          variant: (Math.random() * 6) | 0,
+          growth: planted ? 0 : 1,
+          planted,
+        };
+      };
+
+      const trees: Tree[] = [];
+      const target = () => Math.min(700, 300 + live.current.rain * 120 + live.current.flow * 8);
+      const topUp = () => {
+        const t = target();
+        while (trees.length < t) trees.push(tree(cells[(Math.random() * cells.length) | 0]!));
+        for (let k = trees.length - 1; k >= 0 && trees.length > t + 80; k--)
+          if (!trees[k]!.planted) trees.splice(k, 1);
+      };
+      topUp();
+
+      // fine foliage: the small leaves that make a crown look like leaves
+      const specks: Speck[] = Array.from({ length: 1800 }, () => {
+        const i = cells[(Math.random() * cells.length) | 0]!;
+        return {
+          x: i % W,
+          y: (i / W) | 0,
+          phase: (i % W) * 0.006 + Math.random() * 0.7,
+        };
+      });
+
+      // pointer: hover wakes the canopy, drag is a gust, a tap plants a grove
+      let pointer: { x: number; y: number; down: boolean; moved: boolean } | null = null;
+      const toLocal = (e: PointerEvent) => {
+        const r = canvas.getBoundingClientRect();
+        return { x: (e.clientX - r.left - offx) / sc, y: (e.clientY - r.top - offy) / sc };
+      };
+      const down = (e: PointerEvent) => {
+        pointer = { ...toLocal(e), down: true, moved: false };
+        canvas.setPointerCapture(e.pointerId);
+      };
+      const move = (e: PointerEvent) => {
+        const l = toLocal(e);
+        if (pointer?.down && Math.hypot(l.x - pointer.x, l.y - pointer.y) > 4)
+          pointer.moved = true;
+        pointer = { ...l, down: pointer?.down ?? false, moved: pointer?.moved ?? false };
+      };
+      const plant = (x: number, y: number) => {
+        for (let k = 0; k < 9; k++) {
+          const a = Math.random() * Math.PI * 2;
+          const d = 16 + Math.random() * 58;
+          const px = x + Math.cos(a) * d;
+          const py = y + Math.sin(a) * d;
+          if (px < 0 || py < 0 || px >= W || py >= H) continue;
+          trees.push(tree(0, true, px, py));
+        }
+        setGroves((g) => g + 1);
+      };
+      const up = () => {
+        if (pointer && pointer.down && !pointer.moved) plant(pointer.x, pointer.y);
+        if (pointer) pointer.down = false;
+      };
+      const leave = () => (pointer = null);
+      cleanup = () => {
+        canvas.removeEventListener("pointerdown", down);
+        canvas.removeEventListener("pointermove", move);
+        canvas.removeEventListener("pointerup", up);
+        canvas.removeEventListener("pointerleave", leave);
+      };
+      canvas.addEventListener("pointerdown", down);
+      canvas.addEventListener("pointermove", move);
+      canvas.addEventListener("pointerup", up);
+      canvas.addEventListener("pointerleave", leave);
+      api.current.clear = () => {
+        for (let i = trees.length - 1; i >= 0; i--) if (trees[i]!.planted) trees.splice(i, 1);
+        ctx.globalAlpha = 1;
+        ctx.drawImage(ground, 0, 0);
+        setGroves(0);
+      };
+
+      let t = 0;
+      let f = 0;
+      setReady(true);
+      setReport({
+        cover: cells.length / (W * H),
+        stress: healthy + stressed > 0 ? stressed / (healthy + stressed) : null,
+        health: sum / cells.length,
+      });
+
+      const loop = () => {
+        t += 0.016;
+        f++;
+        if (f % 120 === 0) topUp();
+
+        // watercolour memory: the ground shows through again each frame
+        ctx.globalAlpha = 0.05;
+        ctx.drawImage(ground, 0, 0);
+        ctx.globalAlpha = 1;
+
+        const s = live.current;
+        const heat = Math.min(1, Math.max(0, (s.airTemp - 5) / 22));
+        const rainDeep = Math.min(0.35, s.rain * 0.18);
+        const gust = !!pointer && pointer.down && pointer.moved;
+
+        // small leaves first, so crowns sit on top of them
+        for (const sp of specks) {
+          const h = health[((sp.y | 0) * W + (sp.x | 0)) | 0] ?? 0.5;
+          const b = (Math.sin(t * ((Math.PI * 2) / (9 - h * 3 - heat * 2.5)) + sp.phase) + 1) / 2;
+          ctx.globalAlpha = 0.06 + b * 0.18;
+          ctx.fillStyle = b > 0.6 ? midC : deepC;
+          const k = 1 + b * 1.8;
+          ctx.fillRect(sp.x, sp.y, k, k);
+        }
+
+        for (const tr of trees) {
+          if (tr.growth < 1) tr.growth = Math.min(1, tr.growth + 0.008);
+
+          // a healthy tree breathes deep and slow; a thirsty one pants shallow and fast
+          const rate = (Math.PI * 2) / (9 - tr.health * 3 - heat * 2.5);
+          const b = (Math.sin(t * rate + tr.phase) + 1) / 2;
+          const depth = 0.35 + tr.health * 0.5 + rainDeep;
+
+          // wind off the river, and the spring back to where it grew
+          tr.x += (tr.hx - tr.x) * 0.05 + Math.sin(t * 0.35 + tr.hy * 0.008) * (0.2 + s.flow * 0.012);
+          tr.y += (tr.hy - tr.y) * 0.05;
+
+          if (gust && pointer) {
+            const dx = tr.x - pointer.x;
+            const dy = tr.y - pointer.y;
+            const dd = Math.hypot(dx, dy);
+            if (dd < 160 && dd > 0.1) {
+              const k = (1 - dd / 160) * 3;
+              tr.x += (dx / dd) * k;
+              tr.y += (dy / dd) * k;
+            }
+          }
+
+          let r = tr.base * (0.5 + b * depth) * tr.growth;
+          let a = (0.11 + b * 0.3) * (tr.planted ? 0.85 : 1);
+          let sheet2 = tr.planted
+            ? mineS[tr.variant]!
+            : tr.health < 0.4
+              ? dryS[tr.variant]!
+              : tr.tone < 0.55
+                ? deepS[tr.variant]!
+                : midS[tr.variant]!;
+
+          if (pointer && !pointer.down) {
+            const dd = Math.hypot(tr.x - pointer.x, tr.y - pointer.y);
+            if (dd < 150) {
+              const k = 1 - dd / 150;
+              r *= 1 + k * 0.85;
+              a += k * 0.32;
+              sheet2 = wakeS[tr.variant]!;
+            }
+          }
+
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.8, a);
+          ctx.translate(tr.x, tr.y);
+          ctx.rotate(tr.rot);
+          ctx.drawImage(sheet2, -r, -r * tr.squash, r * 2, r * 2 * tr.squash);
+          ctx.restore();
+
+          const r2 = r * 0.55;
+          ctx.globalAlpha = Math.min(0.55, a * 0.7);
+          ctx.drawImage(sheet2, tr.x + tr.ox - r2, tr.y + tr.oy - r2, r2 * 2, r2 * 2);
+
+          // the trunk of a tree someone planted
+          if (tr.planted) {
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = ink;
+            ctx.fillRect(tr.hx - 1.5, tr.hy - 1.5, 3, 3);
+          }
+        }
+        ctx.globalAlpha = 1;
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+    })();
+
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      cleanup();
+    };
+  }, [regionId]);
+
+  const heat = Math.min(1, Math.max(0, (airTemp - 5) / 22));
+  const breath = 9 - report.health * 3 - heat * 2.5;
+
+  return (
+    <>
+      <canvas
+        ref={ref}
+        className="forest-canvas absolute inset-0 h-full w-full"
+        aria-label="Interactive painting of the Zurich region's forests, breathing"
+      />
+      {!ready && (
+        <p className="forest-loading font-display text-xl italic">
+          The canopy is drawing breath…
+        </p>
+      )}
+      <div className="absolute bottom-8 left-8 rounded-sm bg-background/80 px-4 py-3 backdrop-blur-sm md:bottom-12 md:left-14">
+        <p className="font-display text-3xl italic leading-none md:text-4xl">
+          {report.cover > 0 ? `a breath every ${breath.toFixed(1)} s` : "…"}
+        </p>
+        <p className="mt-2 max-w-xs text-[0.8rem] leading-relaxed text-foreground">
+          {report.cover > 0
+            ? `${Math.round(report.cover * 100)}% of this region grows, and the satellite finds `
+            : ""}
+          {report.stress == null
+            ? "no reading on it yet"
+            : `${Math.round(report.stress * 100)}% of it under drought stress (hypothetical VHI)`}
+        </p>
+      </div>
+      <div className="absolute bottom-8 right-8 max-w-xs rounded-sm bg-background/80 px-4 py-3 text-right text-xs text-foreground/80 backdrop-blur-sm md:bottom-12 md:right-14">
+        <p>
+          <b className="font-medium">Move</b> over the canopy to wake it ·{" "}
+          <b className="font-medium">press &amp; drag</b> for a gust ·{" "}
+          <b className="font-medium">tap</b> to plant a grove
+        </p>
+        {groves > 0 && (
+          <button className="legend-toggle pointer-events-auto mt-2" onClick={() => api.current.clear()}>
+            Remove your {groves} grove{groves > 1 ? "s" : ""}
+          </button>
+        )}
+        <p className="mt-3 text-[0.7rem] leading-relaxed text-foreground/80">
+          swisstopo land cover · swissEO Vegetation Health Index (swisstopo / MeteoSwiss) · FOEN
+          river discharge and MeteoSwiss rain and air temperature at Fluntern, live
+        </p>
+      </div>
+    </>
+  );
+}
