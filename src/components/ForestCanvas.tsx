@@ -499,8 +499,7 @@ export function ForestCanvas({
           </button>
         )}
         <p className="mt-3 text-[0.7rem] leading-relaxed text-foreground/80">
-          swisstopo land cover · swissEO Vegetation Health Index (swisstopo / MeteoSwiss) · FOEN
-          river discharge and MeteoSwiss rain and air temperature at Fluntern, live
+          swisstopo land cover · swissEO Vegetation Health Index (swisstopo / MeteoSwiss)
         </p>
       </div>
     </>

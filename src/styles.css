@@ -231,6 +231,12 @@ body { background: var(--forest-wall); }
 .forest-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--forest-dim); margin: 0; }
 .font-display { font-family: var(--font-display); }
 .legend-toggle { font: inherit; background: none; border: 0; padding: 0; cursor: pointer; color: var(--forest-emerald); text-decoration: underline; text-underline-offset: 2px; }
+/* fit the Canopy's own caption chips into the narrower panel without overlapping */
+.forest-sheet-canopy .bottom-8 { bottom: 12px; max-width: 46%; padding: 8px 10px; }
+.forest-sheet-canopy .left-8 { left: 12px; }
+.forest-sheet-canopy .right-8 { right: 12px; }
+.forest-sheet-canopy .bottom-8 .font-display { font-size: 17px; }
+.forest-sheet-canopy .bottom-8 p { font-size: 9px; line-height: 1.5; }
 
 /* The concept mirrors the live artwork; the original three panels stay mounted. */
 .forest-bar { flex-direction: column; align-items: stretch; gap: 2px; height: auto; padding-block: 4px 8px; }

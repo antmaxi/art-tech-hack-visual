@@ -241,8 +241,11 @@ export function ForestInstallation() {
           }
           tlctx.stroke();
         }
-        // year markers: every five years, plus the endpoints and the selection
-        if (i % 5 === 0 || i === n - 1 || sel) {
+        // year markers: every five years, plus the endpoints and the selection,
+        // skipping any that would collide with a neighbour
+        const nearSel = Math.abs(i - idx) < 3;
+        const nearEnd = Math.abs(i - (n - 1)) < 3;
+        if (sel || (!nearSel && (i === n - 1 || (!nearEnd && i % 5 === 0)))) {
           tlctx.fillStyle = sel ? "#d9f7e3" : "rgba(200,220,205,0.55)";
           tlctx.fillText(String(y.year), x0 + 1, h - 3);
         }
