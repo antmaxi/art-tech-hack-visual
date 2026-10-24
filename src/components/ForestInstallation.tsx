@@ -361,66 +361,43 @@ export function ForestInstallation() {
     };
   }, []);
 
-  // ---------- sound (synthesised interpretation) ----------
+  // ---------- sound (composed track, synced one-to-one with the timeline: 3 s per year, 108 s loop) ----------
   useEffect(() => {
     if (!sound) {
-      if (audio.current) {
-        audio.current.ctx.close();
-        audio.current = null;
-      }
+      audio.current?.pause();
       return;
     }
-    const ctx = new AudioContext();
-    const master = ctx.createGain();
-    master.gain.value = 0;
-    master.gain.setTargetAtTime(0.35, ctx.currentTime, 1.5);
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 600;
-    filter.connect(master);
-    master.connect(ctx.destination);
-    const oscs = [55, 82.4, 110.6].map((f, i) => {
-      const o = ctx.createOscillator();
-      o.type = i === 1 ? "triangle" : "sine";
-      o.frequency.value = f;
-      const g = ctx.createGain();
-      g.gain.value = 0.18;
-      o.connect(g).connect(filter);
-      o.start();
-      return o;
-    });
-    // breath noise
-    const len = ctx.sampleRate * 2;
-    const nb = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = nb.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource();
-    src.buffer = nb;
-    src.loop = true;
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.frequency.value = 800;
-    bp.Q.value = 0.7;
-    const air = ctx.createGain();
-    air.gain.value = 0;
-    src.connect(bp).connect(air).connect(master);
-    src.start();
-    audio.current = {
-      ctx,
-      set: (vhi, breath, stress) => {
-        const now = ctx.currentTime;
-        filter.frequency.setTargetAtTime(250 + vhi * 14, now, 0.4);
-        air.gain.setTargetAtTime(0.04 + Math.max(0, breath) * 0.12, now, 0.15);
-        bp.frequency.setTargetAtTime(500 + (breath + 1) * 400, now, 0.2);
-        oscs[1]!.detune.setTargetAtTime(stress * 45, now, 0.5);
-        oscs[2]!.detune.setTargetAtTime(-stress * 30, now, 0.5);
-      },
-    };
+    if (!audio.current) {
+      const track = new Audio(arthack.url);
+      track.loop = true;
+      track.preload = "auto";
+      audio.current = track;
+    }
+    const track = audio.current;
+    track.currentTime = audioTimeForIndex(live.current.index);
+    if (live.current.playing) track.play().catch(() => {});
+  }, [sound]);
+
+  // keep the track locked to the selected year: pause with the timeline,
+  // resume on play, and re-seek whenever the year jumps or drift builds up
+  useEffect(() => {
+    const track = audio.current;
+    if (!track || !sound) return;
+    if (!playing) {
+      track.pause();
+      return;
+    }
+    const target = audioTimeForIndex(index);
+    if (Math.abs(track.currentTime - target) > 0.4) track.currentTime = target;
+    track.play().catch(() => {});
+  }, [index, playing, sound]);
+
+  useEffect(() => {
     return () => {
-      ctx.close();
+      audio.current?.pause();
       audio.current = null;
     };
-  }, [sound]);
+  }, []);
 
   // ---------- immersive ----------
   const enterImmersive = useCallback(() => {
@@ -589,8 +566,9 @@ export function ForestInstallation() {
             Supplied swisstopo monthly observations, averaged over calendar months. Internal missing months are linearly
             interpolated within each region; no extrapolation. Ten regions lack January 1991 and use eleven available
             months. National means weight regions equally, not by forest area. Playback covers 1991–2026 at three seconds
-            per year (108 s); 2026 is preliminary (January–October only). The breathing and the
-            sound are artistic interpretations — the data does not measure respiration, and no forest sound is recorded.
+            per year (108 s); 2026 is preliminary (January–October only). The breathing is an
+            artistic interpretation — the data does not measure respiration. The soundtrack is a composed 108-second
+            piece, synced one-to-one with the years.
           </p>
         </aside>
       )}
