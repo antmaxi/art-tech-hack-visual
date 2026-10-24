@@ -1,4 +1,6 @@
 # Immersive national Canopy
+- [x] Decouple immersive health-field data from region identity and prevent stale health during terrain loading.
+- [x] Verify all-region national values, selection independence during immersion, and regional restoration.
 - [x] Layer the existing Canopy with the breathing artwork only in Immersion Mode, using national annual VHI.
 - [x] Verify national scope, unchanged timeline, and restoration of the original regional interface.
 

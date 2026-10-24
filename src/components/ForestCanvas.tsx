@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { wmsUrlFor } from "@/lib/map-geo";
-import { getRegion, getRegionVhi, regionFrame, regionLabel } from "@/lib/vhi-source";
+import { getRegion, regionFrame, regionLabel } from "@/lib/vhi-source";
+import { canopyHealthSource } from "@/lib/canopy-scope";
 
 function cssVar(n: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -120,18 +121,18 @@ export function ForestCanvas({
   rain: number;
   airTemp: number;
   flow: number;
-  /** Annual regional VHI (0..100); null/undefined = no observation. */
+  /** Annual VHI (0..100) in the active data scope; null/undefined = no observation. */
   vhi?: number | null;
   dataScope?: "regional" | "national";
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const live = useRef({ rain, airTemp, flow, vhi });
+  const live = useRef({ rain, airTemp, flow, vhi, dataScope });
   const api = useRef<{ clear: () => void }>({ clear: () => {} });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    live.current = { rain, airTemp, flow, vhi };
-  }, [rain, airTemp, flow, vhi]);
+    live.current = { rain, airTemp, flow, vhi, dataScope };
+  }, [rain, airTemp, flow, vhi, dataScope]);
 
   useEffect(() => {
     let raf = 0;
@@ -139,7 +140,6 @@ export function ForestCanvas({
     let cleanup = () => {};
     const region = getRegion(regionId);
     const { bbox, W, H, toPx } = regionFrame(region);
-    const vhiSrc = getRegionVhi(region.id, live.current.vhi);
     setReady(false);
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
@@ -166,6 +166,9 @@ export function ForestCanvas({
     (async () => {
       const cover = await loadImg(wmsUrlFor("ch.swisstopo.vec200-landcover", bbox, W, H));
       if (!alive) return;
+      // Read health after the asynchronous terrain load; scope/year may have changed while waiting.
+      const initialHealth = live.current;
+      const vhiSrc = canopyHealthSource(region.id, initialHealth.vhi, initialHealth.dataScope);
 
       const sheet = (img: HTMLImageElement) => {
         const c = document.createElement("canvas");
@@ -329,7 +332,8 @@ export function ForestCanvas({
 
       let t = 0;
       let f = 0;
-      let healthVhi = live.current.vhi;
+      let healthVhi = initialHealth.vhi;
+      let healthScope = initialHealth.dataScope;
       setReady(true);
 
       const loop = () => {
@@ -343,9 +347,10 @@ export function ForestCanvas({
         ctx.globalAlpha = 1;
 
         const s = live.current;
-        if (healthVhi !== s.vhi) {
+        if (healthVhi !== s.vhi || healthScope !== s.dataScope) {
           healthVhi = s.vhi;
-          const source = getRegionVhi(region.id, s.vhi);
+          healthScope = s.dataScope;
+          const source = canopyHealthSource(region.id, s.vhi, s.dataScope);
           for (const i of cells) health[i] = source.field((i % W) / W, ((i / W) | 0) / H);
           for (const tr of trees) tr.health = health[((tr.hy | 0) * W + (tr.hx | 0)) | 0] ?? 0.5;
         }
