@@ -542,14 +542,9 @@ export function ForestInstallation() {
             </Button>
           )}
           <ZauberparkConcept
-            source={fieldEl}
-            canopyHost={canopyHostEl}
             container={wallRef}
             open={zauberpark}
             onOpenChange={setZauberpark}
-            sound={sound}
-            onToggleSound={() => setSound((s) => !s)}
-            year={year.year}
           />
         </div>
       </footer>
