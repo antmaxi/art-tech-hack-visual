@@ -114,7 +114,6 @@ export function ForestCanvas({
   flow,
   regionId,
   vhi,
-  year,
 }: {
   regionId: number;
   rain: number;
@@ -122,24 +121,11 @@ export function ForestCanvas({
   flow: number;
   /** Observed August VHI (0..100) for the selected year; null/undefined = no observation. */
   vhi?: number | null;
-  year?: number;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const live = useRef({ rain, airTemp, flow });
   const api = useRef<{ clear: () => void }>({ clear: () => {} });
   const [ready, setReady] = useState(false);
-  const [groves, setGroves] = useState(0);
-  const [report, setReport] = useState<{
-    cover: number;
-    stress: number | null;
-    health: number;
-    hypothetical: boolean;
-  }>({
-    cover: 0,
-    stress: null,
-    health: 0.5,
-    hypothetical: true,
-  });
 
   useEffect(() => {
     live.current = { rain, airTemp, flow };
@@ -153,7 +139,6 @@ export function ForestCanvas({
     const { bbox, W, H, toPx } = regionFrame(region);
     const vhiSrc = getRegionVhi(region.id, vhi);
     setReady(false);
-    setGroves(0);
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -206,9 +191,6 @@ export function ForestCanvas({
       // where anything actually grows, and how healthy the satellite finds it
       const cells: number[] = [];
       const health = new Float32Array(W * H).fill(0.5);
-      let healthy = 0;
-      let stressed = 0;
-      let sum = 0;
       for (let i = 0; i < W * H; i++) {
         if (mask[i * 4 + 3]! < 128 || lc[i * 4 + 3]! < 40) continue;
         const r = lc[i * 4]!;
@@ -217,10 +199,7 @@ export function ForestCanvas({
         if (!(g > r + 10 && g > b + 10)) continue;
         cells.push(i);
         const h = vhiSrc.field((i % W) / W, ((i / W) | 0) / H);
-        if (h > 0.6) healthy++;
-        else if (h < 0.4) stressed++;
         health[i] = h;
-        sum += h;
       }
       if (!cells.length) return;
 
@@ -323,7 +302,6 @@ export function ForestCanvas({
           if (px < 0 || py < 0 || px >= W || py >= H) continue;
           trees.push(tree(0, true, px, py));
         }
-        setGroves((g) => g + 1);
       };
       const up = () => {
         if (pointer && pointer.down && !pointer.moved) plant(pointer.x, pointer.y);
@@ -344,18 +322,11 @@ export function ForestCanvas({
         for (let i = trees.length - 1; i >= 0; i--) if (trees[i]!.planted) trees.splice(i, 1);
         ctx.globalAlpha = 1;
         ctx.drawImage(ground, 0, 0);
-        setGroves(0);
       };
 
       let t = 0;
       let f = 0;
       setReady(true);
-      setReport({
-        cover: cells.length / (W * H),
-        stress: healthy + stressed > 0 ? stressed / (healthy + stressed) : null,
-        health: sum / cells.length,
-        hypothetical: vhiSrc.hypothetical,
-      });
 
       const loop = () => {
         t += 0.016;
@@ -457,51 +428,27 @@ export function ForestCanvas({
     };
   }, [regionId, vhi]);
 
-  const heat = Math.min(1, Math.max(0, (airTemp - 5) / 22));
-  const breath = 9 - report.health * 3 - heat * 2.5;
-
   return (
     <>
       <canvas
         ref={ref}
         className="forest-canvas absolute inset-0 h-full w-full"
-        aria-label="Interactive painting of the Zurich region's forests, breathing"
+        tabIndex={0}
+        aria-label="Interactive painting of the Zurich region's forests, breathing. Tap to plant a grove; Delete or Backspace removes your groves."
+        onPointerDown={() => ref.current?.focus({ preventScroll: true })}
+        onKeyDown={(event) => {
+          if (event.key === "Delete" || event.key === "Backspace") {
+            event.preventDefault();
+            event.stopPropagation();
+            api.current.clear();
+          }
+        }}
       />
       {!ready && (
         <p className="forest-loading font-display text-xl italic">
           The canopy is drawing breath…
         </p>
       )}
-      <div className="absolute bottom-8 left-8 rounded-sm bg-background/80 px-4 py-3 backdrop-blur-sm md:bottom-12 md:left-14">
-        <p className="font-display text-3xl italic leading-none md:text-4xl">
-          {report.cover > 0 ? `a breath every ${breath.toFixed(1)} s` : "…"}
-        </p>
-        <p className="mt-2 max-w-xs text-[0.8rem] leading-relaxed text-foreground">
-          {report.cover > 0
-            ? `${Math.round(report.cover * 100)}% of this region grows, and the satellite finds `
-            : ""}
-          {report.stress == null
-            ? "no reading on it yet"
-            : `${Math.round(report.stress * 100)}% of it under drought stress (${
-                report.hypothetical ? "hypothetical VHI" : `swissEO VHI${year ? `, August ${year}` : ""}`
-              })`}
-        </p>
-      </div>
-      <div className="absolute bottom-8 right-8 max-w-xs rounded-sm bg-background/80 px-4 py-3 text-right text-xs text-foreground/80 backdrop-blur-sm md:bottom-12 md:right-14">
-        <p>
-          <b className="font-medium">Move</b> over the canopy to wake it ·{" "}
-          <b className="font-medium">press &amp; drag</b> for a gust ·{" "}
-          <b className="font-medium">tap</b> to plant a grove
-        </p>
-        {groves > 0 && (
-          <button className="legend-toggle pointer-events-auto mt-2" onClick={() => api.current.clear()}>
-            Remove your {groves} grove{groves > 1 ? "s" : ""}
-          </button>
-        )}
-        <p className="mt-3 text-[0.7rem] leading-relaxed text-foreground/80">
-          swisstopo land cover · swissEO Vegetation Health Index (swisstopo / MeteoSwiss)
-        </p>
-      </div>
     </>
   );
 }
