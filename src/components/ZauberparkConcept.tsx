@@ -89,22 +89,28 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
     };
     let frame = 0;
     let previous = -100;
+    // Vertical split of every projection surface: Canopy above, breathing field below, dark seam between.
+    const BAND_END = 0.45;
+    const BAND_START = 0.47;
     const draw = (time: number) => {
       const original = source.current;
+      const canopyCanvas = canopyHost?.current?.querySelector("canvas");
       if (original && original.width > 0 && original.height > 0 && time - previous >= 50) {
         ctx.clearRect(0,0,target.width,target.height);
-        lightContext.drawImage(original,0,0,light.width,light.height);
-        const pixels = lightContext.getImageData(0,0,light.width,light.height);
-        for (let i = 0; i < pixels.data.length; i += 4) {
-          const luminance = (pixels.data[i] ?? 0) * 0.2126 + (pixels.data[i+1] ?? 0) * 0.7152 + (pixels.data[i+2] ?? 0) * 0.0722;
-          pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - 45) * 3.5));
-        }
-        lightContext.putImageData(pixels,0,0);
+        threshold(fieldContext, original, 45);
+        const hasCanopy = canopyCanvas && canopyCanvas.width > 0 && canopyCanvas.height > 0;
+        if (hasCanopy) threshold(canopyContext, canopyCanvas, 30);
         for (const patch of surfaces) {
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
-            tile(light,patch,column/20,row/12,1/20,1/12,false);
-            tile(light,patch,column/20,row/12,1/20,1/12,true);
+            const u = column/20, v = row/12, du = 1/20, dv = 1/12;
+            const mid = v + dv/2;
+            let plate = fieldLight, v0 = 0, vScale = 1;
+            if (mid < BAND_END) { plate = hasCanopy ? canopyLight : fieldLight; v0 = 0; vScale = 1/BAND_END; }
+            else if (mid > BAND_START) { plate = fieldLight; v0 = -BAND_START/(1-BAND_START); vScale = 1/(1-BAND_START); }
+            else continue; // the seam stays unlit, separating the two stacked projections
+            tile(plate,patch,u,v,du,dv,false,v0,vScale);
+            tile(plate,patch,u,v,du,dv,true,v0,vScale);
           }
         }
         ctx.globalAlpha = 1;
