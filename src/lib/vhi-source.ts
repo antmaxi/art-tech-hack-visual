@@ -5,11 +5,46 @@ export const REGIONS = data.regions as VhiRegion[];
 export const DEFAULT_REGION = 39;
 
 export const REGION_NAMES: Record<number, string> = {
-  39: "Zurich, Glatt & Limmat",
-  42: "Zurich Unterland & Weinland",
-  43: "Zurich Oberland & Pfannenstiel",
+  31: "Östlicher Jura",
+  32: "Balsthal",
+  33: "Unteres Emmental",
+  34: "Berner Mittelland",
+  35: "Westliches Berner Oberland",
+  36: "Greyerzerland",
+  37: "Oberaargau",
+  38: "Oberes Emmental",
+  39: "Freiamt",
+  40: "Westliche Zentralschweiz",
+  41: "Östliches Berner Oberland",
+  42: "Östliches Mittelland",
+  43: "Zürichseebecken",
+  44: "Östliche Zentralschweiz",
+  45: "Urner Alpen",
+  46: "Surselva",
+  47: "Alpstein",
+  48: "Glarner Alpen",
+  49: "Nördliches Mittelbünden",
+  50: "Südliches Mittelbünden",
+  51: "Rheintal",
+  52: "Prättigau",
+  53: "Freiberge",
+  54: "Westlicher Jura",
+  55: "Westliches Mittelland",
+  56: "Genferseebecken",
+  57: "Chablais",
+  58: "Walliser Südalpen",
+  59: "Nördliches Wallis",
+  60: "Vispertäler",
+  61: "Goms",
+  62: "Westliches Tessin",
+  63: "Nordtessin",
+  64: "Östliches Tessin",
+  65: "Sottoceneri",
+  66: "Bündner Südtäler",
+  67: "Oberengadin",
+  68: "Unterengadin",
 };
-export const regionLabel = (id: number) => REGION_NAMES[id] ?? `Warning region ${id}`;
+export const regionLabel = (id: number) => REGION_NAMES[id] ?? `Region ${id}`;
 export const getRegion = (id: number) => REGIONS.find((r) => r.id === id) ?? REGIONS.find((r) => r.id === DEFAULT_REGION)!;
 
 function hash(n: number) {
