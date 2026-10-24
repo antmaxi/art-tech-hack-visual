@@ -8,10 +8,11 @@ import {
   ORIGINAL_MONTHLY_VHI,
   parseMonthlyVhi,
   YEAR_DURATION_MS,
+  PRELIMINARY_YEARS,
 } from "@/lib/annual-vhi";
 import { ANNUAL_YEARS } from "@/lib/forest-data";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
-import { getRegionVhi } from "@/lib/vhi-source";
+import { getRegionVhi, regionLabel } from "@/lib/vhi-source";
 
 describe("annual Swiss VHI rules", () => {
   it("averages all twelve months rather than an August snapshot", () => {
@@ -54,10 +55,12 @@ describe("annual Swiss VHI rules", () => {
       ),
     ).toBe(true);
   });
-  it("keeps 35 historical years at 5000ms each for a 175-second sequence", () => {
-    expect(ANNUAL_YEARS.map((r) => r.year)).toEqual(Array.from({ length: 35 }, (_, i) => 1991 + i));
+  it("covers 1991–2026 at 3000ms per year (108 s)", () => {
+    expect(ANNUAL_YEARS.map((r) => r.year)).toEqual(Array.from({ length: 36 }, (_, i) => 1991 + i));
     expect(YEAR_DURATION_MS).toBe(3000);
     expect(ANNUAL_YEARS.length * YEAR_DURATION_MS).toBe(108000);
+    expect(PRELIMINARY_YEARS[2026]).toBe("Jan–Oct");
+    expect(regionLabel(47)).toBe("Alpstein");
   });
   it("uses equal-weight regional annual means for the national field", () => {
     const regions = AVAILABLE_REGION_IDS.map((id) => getAnnualRegion(2025, id)?.vhi ?? 0);

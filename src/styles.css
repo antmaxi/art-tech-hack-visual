@@ -175,7 +175,8 @@ body { background: var(--forest-wall); }
 .forest-map.leaflet-container { background: var(--forest-sheet); }
 .forest-clickable { cursor: pointer; }
 .forest-basemap { filter: grayscale(0.85) brightness(0.55) contrast(1.15); }
-.forest-contours { mix-blend-mode: screen; filter: invert(1) grayscale(1); }
+.forest-contours { mix-blend-mode: multiply; filter: grayscale(1) contrast(1.4); }
+.forest-prelim { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--forest-earth); }
 
 .forest-spine, .forest-cap, .forest-brand, .forest-imm-year { position: absolute; z-index: 500; pointer-events: none; text-transform: uppercase; letter-spacing: 0.18em; text-shadow: 0 1px 3px oklch(0 0 0 / 0.8); transition: opacity 0.8s ease; }
 .forest-spine { top: 18px; left: 12px; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; color: var(--forest-dim); }

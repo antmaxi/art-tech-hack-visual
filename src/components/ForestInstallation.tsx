@@ -5,7 +5,7 @@ import { noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
-import { AVAILABLE_REGION_IDS, getAnnualRegion, YEAR_DURATION_MS } from "@/lib/annual-vhi";
+import { AVAILABLE_REGION_IDS, getAnnualRegion, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { DEFAULT_REGION, regionLabel } from "@/lib/vhi-source";
 
@@ -46,14 +46,14 @@ export function ForestInstallation() {
     import("leaflet").then((mod) => {
       const L = mod.default ?? mod;
       if (disposed || !mapEl.current) return;
-      map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
-      L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg", {
+      map = L.map(mapEl.current, { zoomControl: false, attributionControl: false, zoomSnap: 0 });
+      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 18,
         className: "forest-basemap",
       }).addTo(map);
       L.tileLayer(
         "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg",
-        { maxZoom: 18, opacity: 0.18, className: "forest-contours" },
+        { maxZoom: 18, opacity: 0.18, className: "forest-contours", bounds: L.latLngBounds([[45.8, 5.95], [47.82, 10.5]]) },
       ).addTo(map);
       const bounds = L.latLngBounds(SWITZERLAND_BOUNDS);
       const outline = getComputedStyle(document.documentElement).getPropertyValue("--forest-ink").trim();
@@ -99,7 +99,7 @@ export function ForestInstallation() {
       };
       setTimeout(() => {
         map?.invalidateSize();
-        map?.fitBounds(bounds, { padding: [28, 28] });
+        map?.fitBounds(bounds, { padding: [4, 4] });
         const currentYear = live.current.years[live.current.index];
         if (currentYear) mapApi.current?.show(currentYear, live.current.regionId);
       }, 120);
@@ -492,7 +492,7 @@ export function ForestInstallation() {
           <div className="forest-spine">03 · The forest breathes</div>
           <div className="forest-imm-year" aria-live="polite">
             <span>{year.year}</span>
-            <small>{year.vhi != null ? `VHI ${year.vhi.toFixed(1)} · ${band(year.vhi)}` : statusLabel(year)}</small>
+            <small>{year.vhi != null ? `VHI ${year.vhi.toFixed(1)} · ${band(year.vhi)}` : statusLabel(year)}{PRELIMINARY_YEARS[year.year] ? " · preliminary Jan–Oct" : ""}</small>
           </div>
         </section>
       </div>
@@ -514,6 +514,7 @@ export function ForestInstallation() {
             {playing ? "Pause" : "Play"}
           </Button>
           <span className="forest-year">{year.year}</span>
+          {PRELIMINARY_YEARS[year.year] && <span className="forest-prelim">preliminary · {PRELIMINARY_YEARS[year.year]}</span>}
           <Button variant="ghost" type="button" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
             Sound {sound ? "on" : "off"}
           </Button>
@@ -577,8 +578,8 @@ export function ForestInstallation() {
           <p className="forest-legend-note">
             Supplied swisstopo monthly observations, averaged over calendar months. Internal missing months are linearly
             interpolated within each region; no extrapolation. Ten regions lack January 1991 and use eleven available
-            months. National means weight regions equally, not by forest area. Playback covers 1991–2025 at five seconds
-            per year; January–October 2026 remains in the source but is excluded as incomplete. The breathing and the
+            months. National means weight regions equally, not by forest area. Playback covers 1991–2026 at three seconds
+            per year (108 s); 2026 is preliminary (January–October only). The breathing and the
             sound are artistic interpretations — the data does not measure respiration, and no forest sound is recorded.
           </p>
         </aside>

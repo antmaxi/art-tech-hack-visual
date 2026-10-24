@@ -11,7 +11,8 @@ export type AnnualVhi = {
 };
 export const YEAR_DURATION_MS = 3000;
 export const PLAYBACK_FIRST_YEAR = 1991;
-export const PLAYBACK_LAST_YEAR = 2025;
+export const PLAYBACK_LAST_YEAR = 2026;
+export const PRELIMINARY_YEARS: Record<number, string> = { 2026: "Jan–Oct" };
 
 const monthIndex = (month: string) => Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
 const monthLabel = (index: number) => `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
