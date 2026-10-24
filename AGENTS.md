@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 - Keep the Zauberpark concept in a scoped modal that mirrors the existing field canvas rather than remounting the installation, so the timeline, evolving animation and shared audio survive opening and closing it.
+- ImmersiveForestProjection mirrors both continuously mounted artwork canvases into one screen-blended texture mapped onto photograph-space floor, trunks and foliage with a reflectance/occlusion mask; environmental presentation must never alter data, source drawing or playback.
 - Mount the concept portal inside the Forest wall and let its dialog own keyboard dismissal while open, so it also works within document fullscreen without exiting the underlying immersive mode.
 - Keep authentic concept photographs as CDN asset pointers and map the shared artwork canvas into photograph-space terrain geometry; this preserves venue landmarks and the exact evolving artwork without generating substitute scenery.
 - Panel 2 retains the original Canopy on pure black and regional annual VHI outside immersion; canopy-scope selects the existing national annual mean only during immersion. Keep the same Canopy mounted with its entry terrain region fixed, screen-blended above the breathing canvas only under .is-immersive, so regional selection, planted groves and animation survive mode changes.
