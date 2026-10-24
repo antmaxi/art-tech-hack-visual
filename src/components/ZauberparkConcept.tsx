@@ -7,6 +7,8 @@ import styles from "./ZauberparkConcept.module.css";
 
 type Props = {
   source: RefObject<HTMLCanvasElement | null>;
+  /** Host of the live Canopy panel; its canvas feeds the upper projection band. */
+  canopyHost?: RefObject<HTMLElement | null>;
   container: RefObject<HTMLDivElement | null>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
