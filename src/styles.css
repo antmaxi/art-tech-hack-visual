@@ -209,7 +209,6 @@ body { background: var(--forest-wall); }
 .forest-legend p { margin: 0 0 8px; }
 .forest-legend b { color: var(--forest-ink); font-weight: 500; margin-right: 6px; }
 .forest-legend em { color: var(--forest-earth); font-style: normal; }
-.forest-legend-note { font-size: 10px; opacity: 0.85; margin-top: 12px !important; }
 
 /* immersive */
 .is-immersive { background: oklch(0 0 0); }
@@ -260,7 +259,7 @@ body { background: var(--forest-wall); }
 .zauber-view .zauber-close:focus-visible { outline: 1px solid var(--forest-emerald); }
 .zauber-title-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .forest-bar .forest-about-entry { flex-basis: auto; justify-content: flex-start; font-size: inherit; letter-spacing: inherit; height: auto; padding: 0; }
-.forest-bar-row .forest-source { margin-left: auto; }
+.forest-bar .forest-data-source { align-self: flex-start; font-size: 9px; letter-spacing: 0.14em; padding-top: 3px; }
 .forest-cta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .forest-cta .forest-zauber-entry { flex-basis: auto; padding: 0; }
 .is-immersive .forest-cta { align-items: center; }
