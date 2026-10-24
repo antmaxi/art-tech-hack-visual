@@ -1,20 +1,36 @@
-import csv from '@/data/forest-vhi-monthly.csv?raw';
+import csv from "@/data/forest-vhi-monthly.csv?raw";
 
 export type MonthlyVhi = { month: string; regionId: number; vhi: number | null; interpolated: boolean };
-export type AnnualVhi = { year: number; regionId: number; vhi: number | null; monthsAvailable: number; observedMonths: number; interpolatedMonths: number };
-export const YEAR_DURATION_MS = 5000;
+export type AnnualVhi = {
+  year: number;
+  regionId: number;
+  vhi: number | null;
+  monthsAvailable: number;
+  observedMonths: number;
+  interpolatedMonths: number;
+};
+export const YEAR_DURATION_MS = 3000;
 export const PLAYBACK_FIRST_YEAR = 1991;
 export const PLAYBACK_LAST_YEAR = 2025;
 
 const monthIndex = (month: string) => Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
-const monthLabel = (index: number) => `${Math.floor(index / 12)}-${String(index % 12 + 1).padStart(2, '0')}`;
+const monthLabel = (index: number) => `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
 
 export function parseMonthlyVhi(text: string): MonthlyVhi[] {
-  return text.trim().split(/\r?\n/).slice(1).map((line) => {
-    const [month = '', region, value] = line.split(',');
-    const parsed = value?.trim() ? Number(value) : null;
-    return { month, regionId: Number(region), vhi: parsed != null && Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null, interpolated: false };
-  });
+  return text
+    .trim()
+    .split(/\r?\n/)
+    .slice(1)
+    .map((line) => {
+      const [month = "", region, value] = line.split(",");
+      const parsed = value?.trim() ? Number(value) : null;
+      return {
+        month,
+        regionId: Number(region),
+        vhi: parsed != null && Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null,
+        interpolated: false,
+      };
+    });
 }
 
 /** Fill only bounded gaps within one region; original observations remain untouched. */
@@ -40,7 +56,12 @@ export function interpolateMonthly(rows: MonthlyVhi[]): MonthlyVhi[] {
       if (previous >= 0 && before != null) {
         for (let i = previous + 1; i < next; i++) {
           const row = series[i];
-          if (row) series[i] = { ...row, vhi: before + (value - before) * (i - previous) / (next - previous), interpolated: true };
+          if (row)
+            series[i] = {
+              ...row,
+              vhi: before + ((value - before) * (i - previous)) / (next - previous),
+              interpolated: true,
+            };
         }
       }
       previous = next;
@@ -59,7 +80,8 @@ export function aggregateAnnual(rows: MonthlyVhi[]): AnnualVhi[] {
   return [...groups.values()].map((group) => {
     const valid = group.filter((r) => r.vhi != null);
     return {
-      year: Number(group[0]?.month.slice(0, 4)), regionId: group[0]?.regionId ?? 0,
+      year: Number(group[0]?.month.slice(0, 4)),
+      regionId: group[0]?.regionId ?? 0,
       vhi: valid.length ? valid.reduce((sum, r) => sum + (r.vhi ?? 0), 0) / valid.length : null,
       monthsAvailable: valid.length,
       observedMonths: valid.filter((r) => !r.interpolated).length,
@@ -72,7 +94,8 @@ export const ORIGINAL_MONTHLY_VHI = parseMonthlyVhi(csv);
 export const MONTHLY_VHI = interpolateMonthly(ORIGINAL_MONTHLY_VHI);
 export const ANNUAL_REGIONAL_VHI = aggregateAnnual(MONTHLY_VHI);
 export const AVAILABLE_REGION_IDS = [...new Set(ORIGINAL_MONTHLY_VHI.map((r) => r.regionId))].sort((a, b) => a - b);
-export const getAnnualRegion = (year: number, regionId: number) => ANNUAL_REGIONAL_VHI.find((r) => r.year === year && r.regionId === regionId);
+export const getAnnualRegion = (year: number, regionId: number) =>
+  ANNUAL_REGIONAL_VHI.find((r) => r.year === year && r.regionId === regionId);
 
 /** Equal-weight average of regional annual means; not an area-weighted national estimate. */
 export function nationalAnnual(year: number) {
