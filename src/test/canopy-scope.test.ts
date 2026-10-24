@@ -42,7 +42,7 @@ describe('immersive-only Canopy data scope', () => {
     for (const id of AVAILABLE_REGION_IDS) {
       const source = canopyHealthSource(id, vhi, 'national');
       expect(source.mean).toBeCloseTo(0.4928923245614036, 10);
-      for (const [u, v] of [[0.1, 0.2], [0.5, 0.5], [0.8, 0.7]]) {
+      for (const [u, v] of [[0.1, 0.2], [0.5, 0.5], [0.8, 0.7]] as const) {
         expect(source.field(u, v)).toBe(national.field(u, v));
       }
     }
