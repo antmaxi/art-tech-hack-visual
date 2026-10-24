@@ -99,7 +99,7 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
         ctx.clearRect(0,0,target.width,target.height);
         threshold(fieldContext, original, 45);
         const hasCanopy = canopyCanvas && canopyCanvas.width > 0 && canopyCanvas.height > 0;
-        if (hasCanopy) threshold(canopyContext, canopyCanvas, 30);
+        if (hasCanopy) threshold(canopyContext, canopyCanvas, 48);
         for (const patch of surfaces) {
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
