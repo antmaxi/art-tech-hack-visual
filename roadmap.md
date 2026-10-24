@@ -21,8 +21,8 @@
 - [x] Verify timeline, artwork, map layers and existing controls; five existing tests pass and browser checks report no runtime errors.
 
 # Swiss annual and regional data
-- [ ] Remove only the top-right Forest title and year-range markup from panel 3, preserving the artwork.
-- [ ] Import supplied monthly data; aggregate annual regional and national VHI with bounded monthly interpolation and provenance.
-- [ ] Frame all Switzerland, select any supplied region on the map, and synchronise the unchanged Canopy.
-- [ ] Use national annual means for the breathing field and timeline; play 1991–2025 at five seconds per year.
-- [ ] Verify data rules, map selection, timeline, Canopy, and preserved controls.
+- [x] Remove only the top-right Forest title and year-range markup from panel 3, preserving the artwork.
+- [x] Import supplied monthly data; aggregate annual regional and national VHI with bounded monthly interpolation and provenance.
+- [x] Frame all Switzerland, select any supplied region on the map, and synchronise the unchanged Canopy.
+- [x] Use national annual means for the breathing field and timeline; play 1991–2025 at five seconds per year.
+- [x] Verify data rules, map selection, timeline, Canopy, and preserved controls.

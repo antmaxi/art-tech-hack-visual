@@ -235,7 +235,8 @@ export function ForestInstallation() {
         const nearEnd = Math.abs(i - (n - 1)) < 3;
         if (sel || (!nearSel && (i === n - 1 || (!nearEnd && i % 5 === 0)))) {
           tlctx.fillStyle = sel ? "#d9f7e3" : "rgba(200,220,205,0.55)";
-          tlctx.fillText(String(y.year), x0 + 1, h - 3);
+          const label = String(y.year);
+          tlctx.fillText(label, Math.min(x0 + 1, w - tlctx.measureText(label).width - 1), h - 3);
         }
         if (sel) {
           tlctx.strokeStyle = "#d9f7e3";
