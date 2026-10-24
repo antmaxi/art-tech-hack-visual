@@ -9,7 +9,6 @@ import { AVAILABLE_REGION_IDS, getAnnualRegion, PRELIMINARY_YEARS, YEAR_DURATION
 import { canopyAnnualVhi } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { DEFAULT_REGION, regionLabel } from "@/lib/vhi-source";
-import { ImmersiveForestProjection } from "@/components/ImmersiveForestProjection";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
@@ -499,8 +498,6 @@ export function ForestInstallation() {
           </div>
         </section>
       </div>
-
-      {immersive && <ImmersiveForestProjection source={fieldEl} container={wallRef} />}
 
       <footer className="forest-bar">
         <canvas
