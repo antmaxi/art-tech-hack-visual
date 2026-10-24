@@ -35,8 +35,8 @@ describe('shared breathing tempo', () => {
     expect(breathRate(0.5)).toBeGreaterThan(breathRate(1));
   });
 
-  it('lets peak health breathe very slowly, over 14 seconds per breath', () => {
+  it('lets peak health breathe very slowly, over 20 seconds per breath', () => {
     const secondsPerBreath = (2 * Math.PI) / (breathRate(1) * 60);
-    expect(secondsPerBreath).toBeGreaterThan(14);
+    expect(secondsPerBreath).toBeGreaterThan(20);
   });
 });

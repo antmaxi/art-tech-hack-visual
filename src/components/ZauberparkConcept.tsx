@@ -8,7 +8,7 @@ import styles from "./ZauberparkConcept.module.css";
 type Props = {
   source: RefObject<HTMLCanvasElement | null>;
   /** Host of the live Canopy panel; its canvas feeds the upper projection band. */
-  canopyHost?: RefObject<HTMLElement | null>;
+  canopyHost?: RefObject<HTMLElement | null> | undefined;
   container: RefObject<HTMLDivElement | null>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -99,7 +99,7 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
         ctx.clearRect(0,0,target.width,target.height);
         threshold(fieldContext, original, 45);
         const hasCanopy = canopyCanvas && canopyCanvas.width > 0 && canopyCanvas.height > 0;
-        if (hasCanopy) threshold(canopyContext, canopyCanvas, 30);
+        if (hasCanopy) threshold(canopyContext, canopyCanvas, 48);
         for (const patch of surfaces) {
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {

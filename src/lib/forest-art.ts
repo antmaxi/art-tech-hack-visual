@@ -71,4 +71,4 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
  * shallow panting), with a smooth nonlinear gradient between. Both panels call this
  * so their movement stays synchronised in Immersion Mode.
  */
-export const breathRate = (health: number) => 0.0068 + (1 - clamp01(health)) ** 2 * 0.046;
+export const breathRate = (health: number) => 0.0045 + (1 - clamp01(health)) ** 2 * 0.048;
