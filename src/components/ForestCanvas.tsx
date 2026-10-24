@@ -114,6 +114,7 @@ export function ForestCanvas({
   flow,
   regionId,
   vhi,
+  dataScope = "regional",
 }: {
   regionId: number;
   rain: number;
@@ -121,6 +122,7 @@ export function ForestCanvas({
   flow: number;
   /** Annual regional VHI (0..100); null/undefined = no observation. */
   vhi?: number | null;
+  dataScope?: "regional" | "national";
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const live = useRef({ rain, airTemp, flow, vhi });
@@ -442,8 +444,9 @@ export function ForestCanvas({
         ref={ref}
         className="forest-canvas absolute inset-0 h-full w-full"
         tabIndex={0}
-        aria-label={`Interactive painting of ${regionLabel(regionId)} forests, breathing. Tap to plant a grove; Delete or Backspace removes your groves.`}
+        aria-label={`Interactive painting of ${dataScope === "national" ? "Switzerland’s" : regionLabel(regionId)} forests, breathing. Tap to plant a grove; Delete or Backspace removes your groves.`}
         data-region-id={regionId}
+        data-scope={dataScope}
         data-annual-vhi={vhi ?? 'missing'}
         onPointerDown={() => ref.current?.focus({ preventScroll: true })}
         onKeyDown={(event) => {
