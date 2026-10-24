@@ -10,6 +10,8 @@ export type AnnualVhi = {
   interpolatedMonths: number;
 };
 export const YEAR_DURATION_MS = 3000;
+/** Position (seconds) of a year index within the composed soundtrack: one-to-one, 3 s per year. */
+export const audioTimeForIndex = (index: number) => (index * YEAR_DURATION_MS) / 1000;
 export const PLAYBACK_FIRST_YEAR = 1991;
 export const PLAYBACK_LAST_YEAR = 2026;
 export const PRELIMINARY_YEARS: Record<number, string> = { 2026: "Jan–Oct" };

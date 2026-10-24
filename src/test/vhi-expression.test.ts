@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { nationalAnnual, normalizeVhi, VHI_RANGE } from '@/lib/annual-vhi';
+import { ANNUAL_YEARS } from '@/lib/forest-data';
+import { audioTimeForIndex, nationalAnnual, normalizeVhi, VHI_RANGE } from '@/lib/annual-vhi';
 import { breathRate } from '@/lib/forest-art';
 
 describe('expressive VHI range', () => {
@@ -38,5 +39,18 @@ describe('shared breathing tempo', () => {
   it('lets peak health breathe very slowly, over 20 seconds per breath', () => {
     const secondsPerBreath = (2 * Math.PI) / (breathRate(1) * 60);
     expect(secondsPerBreath).toBeGreaterThan(20);
+  });
+});
+
+describe('soundtrack synchronisation', () => {
+  it('maps each year to exactly three seconds of the track', () => {
+    expect(audioTimeForIndex(0)).toBe(0);
+    expect(audioTimeForIndex(1)).toBe(3);
+    expect(audioTimeForIndex(35)).toBe(105);
+  });
+
+  it('covers the full 1991–2026 sequence within the 108-second track', () => {
+    expect(ANNUAL_YEARS.length).toBe(36);
+    expect(audioTimeForIndex(ANNUAL_YEARS.length)).toBe(108);
   });
 });
