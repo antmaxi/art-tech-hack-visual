@@ -80,6 +80,16 @@ export function ImmersiveForestProjection({ source, container }: Props) {
           tx.globalCompositeOperation="screen";
           tx.drawImage(canopy,0,0,texture.width,texture.height);
         }
+        // Soft projector falloff removes the edges of each mapped surface.
+        tx.globalCompositeOperation="destination-in";
+        const horizontal=tx.createLinearGradient(0,0,texture.width,0);
+        horizontal.addColorStop(0,"transparent"); horizontal.addColorStop(.09,"white");
+        horizontal.addColorStop(.91,"white"); horizontal.addColorStop(1,"transparent");
+        tx.fillStyle=horizontal; tx.fillRect(0,0,texture.width,texture.height);
+        const vertical=tx.createLinearGradient(0,0,0,texture.height);
+        vertical.addColorStop(0,"transparent"); vertical.addColorStop(.09,"white");
+        vertical.addColorStop(.91,"white"); vertical.addColorStop(1,"transparent");
+        tx.fillStyle=vertical; tx.fillRect(0,0,texture.width,texture.height);
         ctx.clearRect(0,0,width,height);
         ctx.globalCompositeOperation="screen";
         for (const surface of surfaces) {

@@ -305,5 +305,5 @@ body { background: var(--forest-wall); }
 .is-immersive .immersive-forest-environment { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; background: var(--forest-projection-night); animation: immersive-canopy-arrive 1.4s var(--ease-breath) both; }
 .is-immersive .immersive-forest-stage { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: max(100vw, calc(100dvh * 1.79167)); aspect-ratio: 1376 / 768; }
 .is-immersive .immersive-forest-photo { display: block; width: 100%; height: 100%; filter: brightness(.72) saturate(.65); }
-.is-immersive .immersive-forest-light { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: screen; filter: brightness(2.3) contrast(1.45) saturate(1.15); opacity: .97; }
+.is-immersive .immersive-forest-light { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: screen; filter: brightness(1.8) contrast(1.25) saturate(1.15); opacity: .97; }
 @media (prefers-reduced-motion: reduce) { .is-immersive .immersive-forest-environment { animation: none; } }
