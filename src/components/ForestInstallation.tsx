@@ -293,15 +293,16 @@ export function ForestInstallation() {
           const c = (e * (9 + stress * 9) + clock * 0.6) % 1;
           // drought sharpens the contours into thin vibrant lines (extra crisp in Immersion Mode)
           const contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 8 + blacken * 12));
-          // fragmentation under stress (continuous, so year transitions never pop)
-          const frag = 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1);
+          // fragmentation under stress (continuous, so year transitions never pop);
+          // in Immersion Mode the drought lines stay connected so they read as drawn contours
+          const frag = 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1) * (1 - blacken * 0.6);
           // in drought the glow between lines falls back to near-black, keeping only a slight gradient
           const lum = (0.08 * (1 - stress * 0.75) - blacken * 0.06 + e * e * (0.9 - stress * 0.55 - blacken * 0.6)) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
           // continuous gradient: deep emerald at peak health, dark scorched rust in drought
           let R = 6 + lum * (34 + stress * 130);
           let G = 12 + lum * (185 - stress * 115) + fine * 18 * (1 - stress * 0.7);
           let B = 10 + lum * (95 - stress * 60);
-          const cl = contour * (0.35 + health * 0.6 + stress * 0.3 + blacken * 0.3) * frag;
+          const cl = contour * (0.35 + health * 0.6 + stress * 0.3 + blacken * 0.45) * frag;
           R += cl * (90 + stress * 180);
           G += cl * (200 - stress * 100 - blacken * 45);
           B += cl * (130 - stress * 90 - blacken * 55);
