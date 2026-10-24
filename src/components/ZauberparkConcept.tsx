@@ -7,6 +7,8 @@ import styles from "./ZauberparkConcept.module.css";
 
 type Props = {
   source: RefObject<HTMLCanvasElement | null>;
+  /** Host of the live Canopy panel; its canvas feeds the upper projection band. */
+  canopyHost?: RefObject<HTMLElement | null>;
   container: RefObject<HTMLDivElement | null>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -15,7 +17,7 @@ type Props = {
   year: number;
 };
 
-function Projection({ source, animated }: Pick<Props, "source"> & { animated: boolean }) {
+function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "canopyHost"> & { animated: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const target = canvas.current;
@@ -23,11 +25,25 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     if (!target || !ctx) return;
     target.width = 1800;
     target.height = 1200;
-    const light = document.createElement("canvas");
-    light.width = 720;
-    light.height = 480;
-    const lightContext = light.getContext("2d", { willReadFrequently: true });
-    if (!lightContext) return;
+    // Two thresholded light plates: the Canopy (upper band) and the breathing field (lower band).
+    const fieldLight = document.createElement("canvas");
+    fieldLight.width = 720;
+    fieldLight.height = 480;
+    const fieldContext = fieldLight.getContext("2d", { willReadFrequently: true });
+    const canopyLight = document.createElement("canvas");
+    canopyLight.width = 720;
+    canopyLight.height = 480;
+    const canopyContext = canopyLight.getContext("2d", { willReadFrequently: true });
+    if (!fieldContext || !canopyContext) return;
+    const threshold = (plate: CanvasRenderingContext2D, original: HTMLCanvasElement, floor: number) => {
+      plate.drawImage(original, 0, 0, plate.canvas.width, plate.canvas.height);
+      const pixels = plate.getImageData(0, 0, plate.canvas.width, plate.canvas.height);
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const luminance = (pixels.data[i] ?? 0) * 0.2126 + (pixels.data[i+1] ?? 0) * 0.7152 + (pixels.data[i+2] ?? 0) * 0.0722;
+        pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - floor) * 3.5));
+      }
+      plate.putImageData(pixels, 0, 0);
+    };
     // Geometry belongs only to this reference mockup, never to the shared artwork.
     type Surface = { corners: number[][]; alpha: number; bend: number };
     const surfaces: Surface[] = [
@@ -47,10 +63,10 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
         (a[1] ?? 0) * (1-u)*(1-v) + (b[1] ?? 0)*u*(1-v) + (c[1] ?? 0)*u*v + (d[1] ?? 0)*(1-u)*v + Math.sin(u * Math.PI) * Math.sin(v * Math.PI * 2) * bend,
       ];
     };
-    const tile = (original: HTMLCanvasElement, patch: Surface, u: number, v: number, du: number, dv: number, lower: boolean) => {
+    const tile = (original: HTMLCanvasElement, patch: Surface, u: number, v: number, du: number, dv: number, lower: boolean, v0: number, vScale: number) => {
       const p = surface(patch.corners,u,v,patch.bend), q = surface(patch.corners,u+du,v,patch.bend), r = surface(patch.corners,u,v+dv,patch.bend), s = surface(patch.corners,u+du,v+dv,patch.bend);
-      const sx = u*original.width, sy = v*original.height;
-      const sw = du*original.width, sh = dv*original.height;
+      const sx = u*original.width, sy = (v0 + v*vScale)*original.height;
+      const sw = du*original.width, sh = dv*vScale*original.height;
       const x = p[0] ?? 0, y = p[1] ?? 0;
       const qx = q[0] ?? 0, qy = q[1] ?? 0, rx = r[0] ?? 0, ry = r[1] ?? 0, tx = s[0] ?? 0, ty = s[1] ?? 0;
       ctx.save();
@@ -73,22 +89,28 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     };
     let frame = 0;
     let previous = -100;
+    // Vertical split of every projection surface: Canopy above, breathing field below, dark seam between.
+    const BAND_END = 0.45;
+    const BAND_START = 0.47;
     const draw = (time: number) => {
       const original = source.current;
+      const canopyCanvas = canopyHost?.current?.querySelector("canvas");
       if (original && original.width > 0 && original.height > 0 && time - previous >= 50) {
         ctx.clearRect(0,0,target.width,target.height);
-        lightContext.drawImage(original,0,0,light.width,light.height);
-        const pixels = lightContext.getImageData(0,0,light.width,light.height);
-        for (let i = 0; i < pixels.data.length; i += 4) {
-          const luminance = (pixels.data[i] ?? 0) * 0.2126 + (pixels.data[i+1] ?? 0) * 0.7152 + (pixels.data[i+2] ?? 0) * 0.0722;
-          pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - 45) * 3.5));
-        }
-        lightContext.putImageData(pixels,0,0);
+        threshold(fieldContext, original, 45);
+        const hasCanopy = canopyCanvas && canopyCanvas.width > 0 && canopyCanvas.height > 0;
+        if (hasCanopy) threshold(canopyContext, canopyCanvas, 30);
         for (const patch of surfaces) {
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
-            tile(light,patch,column/20,row/12,1/20,1/12,false);
-            tile(light,patch,column/20,row/12,1/20,1/12,true);
+            const u = column/20, v = row/12, du = 1/20, dv = 1/12;
+            const mid = v + dv/2;
+            let plate = fieldLight, v0 = 0, vScale = 1;
+            if (mid < BAND_END) { plate = hasCanopy ? canopyLight : fieldLight; v0 = 0; vScale = 1/BAND_END; }
+            else if (mid > BAND_START) { plate = fieldLight; v0 = -BAND_START/(1-BAND_START); vScale = 1/(1-BAND_START); }
+            else continue; // the seam stays unlit, separating the two stacked projections
+            tile(plate,patch,u,v,du,dv,false,v0,vScale);
+            tile(plate,patch,u,v,du,dv,true,v0,vScale);
           }
         }
         ctx.globalAlpha = 1;
@@ -114,11 +136,11 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     // Switching to still preserves the last rendered frame without resetting the artwork.
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [source, animated]);
-  return <canvas ref={canvas} className={`zauber-projection ${styles['projection']}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup" />;
+  }, [source, canopyHost, animated]);
+  return <canvas ref={canvas} className={`zauber-projection ${styles['projection']}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup: the Canopy visualisation above, the breathing topographic field below" />;
 }
 
-function ConceptScene({ source, sound, onToggleSound, year }: Props) {
+function ConceptScene({ source, canopyHost, sound, onToggleSound, year }: Props) {
   const [animated, setAnimated] = useState(() => !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [stillYear, setStillYear] = useState(year);
   return (
@@ -126,7 +148,7 @@ function ConceptScene({ source, sound, onToggleSound, year }: Props) {
       <div className="zauber-environment" aria-hidden="true">
         <div className={`zauber-stage ${styles['stage']}`}>
           <img src={setting} width={1800} height={1200} alt="" className="zauber-setting" />
-          <Projection source={source} animated={animated} />
+          <Projection source={source} canopyHost={canopyHost} animated={animated} />
         </div>
       </div>
       <header className="zauber-heading">

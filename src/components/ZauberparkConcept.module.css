@@ -6,8 +6,8 @@
 
 .mockup .projection {
   mask-image: none;
-  opacity: 0.88;
-  filter: brightness(2.4);
+  opacity: 0.92;
+  filter: brightness(2.2) contrast(1.15);
 }
 
 @media (max-width: 820px) {
