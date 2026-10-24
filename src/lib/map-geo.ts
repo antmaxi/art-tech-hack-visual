@@ -15,12 +15,6 @@ export function wmsUrl(layers: string) {
   );
 }
 
-// River gauges used by the live river (FOEN)
-export const GAUGES = [
-  { name: "Limmat · Unterhard", x: 2681200, y: 1249800 },
-  { name: "Sihl · Sihlhölzli", x: 2682300, y: 1246800 },
-];
-
 // Approximate, publicly reported data centre sites — positions are indicative only.
 export const DATA_CENTRES = [
   { name: "Equinix ZH4, Oberengstringen", x: 2677600, y: 1251900 },

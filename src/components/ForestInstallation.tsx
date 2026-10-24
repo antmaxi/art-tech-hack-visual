@@ -13,14 +13,10 @@ import { noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
 import { ForestCanvas } from "@/components/ForestCanvas";
 
-const STATIONS = [
-  { name: "Einsiedeln", id: "MeteoSwiss EIN", lat: 47.133042, lon: 8.756556, note: "Rain at Sihlsee." },
-  { name: "Fluntern", id: "MeteoSwiss SMA", lat: 47.381003, lon: 8.567194, note: "Rain in the city." },
-  { name: "Sihl, Sihlhölzli", id: "BAFU 2176", lat: 47.3677, lon: 8.5262, note: "Sihl before it joins the Limmat." },
-  { name: "Lake, Zürichhorn", id: "BAFU 2209", lat: 47.3548, lon: 8.5505, note: "Level of Lake Zurich." },
-  { name: "Letten weir", id: "ewz / canton", lat: 47.385628, lon: 8.535359, weir: true, note: "The weir that releases the lake." },
-  { name: "Limmat, Unterhard", id: "BAFU 2099", lat: 47.3906, lon: 8.5254, note: "Limmat below the weir and the Sihl." },
-  { name: "Limmat, Baden", id: "BAFU 2243", lat: 47.4757, lon: 8.3094, note: "Limmat further downstream." },
+// Preserve the existing geographical framing independently of station markers.
+const PLACE_BOUNDS: [[number, number], [number, number]] = [
+  [47.133042, 8.3094],
+  [47.4757, 8.756556],
 ];
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -71,18 +67,7 @@ export function ForestInstallation() {
         "https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg",
         { maxZoom: 18, opacity: 0.18, className: "forest-contours" },
       ).addTo(map);
-      STATIONS.forEach((s) => {
-        L.circleMarker([s.lat, s.lon], {
-          radius: s.weir ? 5 : 3,
-          color: "#e8f5ec",
-          weight: 1,
-          fillColor: s.weir ? "#b5703a" : "#0b120e",
-          fillOpacity: 1,
-        })
-          .addTo(map!)
-          .bindPopup(`<strong>${s.name}</strong><br>${s.id}<br>${s.note}`);
-      });
-      const bounds = L.latLngBounds(STATIONS.map((s) => [s.lat, s.lon] as [number, number]));
+      const bounds = L.latLngBounds(PLACE_BOUNDS);
       let paint: import("leaflet").Layer | null = null;
       mapApi.current = {
         show: (y) => {
@@ -482,7 +467,6 @@ export function ForestInstallation() {
     setIndex(clamp(Math.floor(((e.clientX - r.left) / r.width) * years.length), 0, years.length - 1));
   };
 
-  const delta = year.vhi == null ? null : year.vhi - mean;
   const first = years[0]!.year;
   const last = years[years.length - 1]!.year;
 
@@ -492,17 +476,10 @@ export function ForestInstallation() {
         <section className="forest-sheet forest-sheet-side" aria-label="Place">
           <div className="forest-map" ref={mapEl} />
           <div className="forest-spine">01 · Place</div>
-          <div className="forest-cap">
-            <b>
-              {year.year} · {year.vhi != null ? `VHI ${year.vhi}` : "—"}
-            </b>
-            {year.vhi != null ? band(year.vhi) : statusLabel(year)}
-            <span className="forest-sub">Limmat forest region · August</span>
-          </div>
         </section>
 
         <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
-          <ForestCanvas regionId={39} vhi={year.vhi} year={year.year} rain={0} airTemp={10} flow={0} />
+          <ForestCanvas regionId={39} vhi={year.vhi} rain={0} airTemp={10} flow={0} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
 
@@ -514,10 +491,6 @@ export function ForestInstallation() {
             {first} — {last}
           </div>
           <div className="forest-spine">03 · The forest breathes</div>
-          <div className="forest-cap">
-            <b>{delta == null ? "·" : `${delta > 0 ? "+" : ""}${delta}`}</b>
-            {delta == null ? statusLabel(year) : `from the mean August (${mean}, 1991–2020)`}
-          </div>
           <div className="forest-imm-year" aria-live="polite">
             <span>{year.year}</span>
             <small>{year.vhi != null ? `VHI ${year.vhi} · ${band(year.vhi)}` : statusLabel(year)}</small>

@@ -14,3 +14,8 @@
 - [x] Rebuild the footer as a chronological bottom timeline with year markers and click selection.
 - [x] Sync selected year into the Canopy (real VHI only; missing years keep the labelled hypothetical field).
 - [x] Verify build, tests and browser behaviour (timeline selection, canopy year switch, immersive, Zauberpark).
+
+# Targeted overlay and river-feature cleanup
+- [x] Remove the specified panel captions and river markers without changing map framing or data layers.
+- [x] Remove Canopy information boxes while retaining planting and focus-scoped Delete/Backspace grove removal.
+- [x] Verify timeline, artwork, map layers and existing controls; five existing tests pass and browser checks report no runtime errors.
