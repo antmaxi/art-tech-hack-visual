@@ -46,3 +46,8 @@
 - [x] Replace the synthesised drone with the supplied 108 s track, synced one-to-one with the timeline (3 s per year).
 - [x] Low VHI: vibrant thin rust contour lines over near-black with only a slight residual gradient.
 - [x] Verify tests, audio loading, and drought-vs-peak contrast in the browser.
+
+# Static photograph mockup
+- [x] Replace the projected mockup entirely with the supplied photograph as a single static image at original proportions and quality.
+- [x] Remove projections, sampled canvases, Still/Breathing and sound controls, captions, disclaimers, borders, gradients and motion.
+- [x] Verify the photograph is served unaltered, the mockup closes, and the three-panel interface plus Immersion Mode are unchanged.
