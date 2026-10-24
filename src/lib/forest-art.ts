@@ -62,3 +62,13 @@ export function vhiColor(v: number | null): number[] {
   return STOPS[STOPS.length - 1]![1];
 }
 export const rgb = (c: number[], a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+/**
+ * Shared breathing tempo for the field and the Canopy (radians per frame at 60fps).
+ * Peak health ≈ 9.5s per breath (slow, meditative); deepest drought ≈ 2s (rapid,
+ * shallow panting), with a smooth nonlinear gradient between. Both panels call this
+ * so their movement stays synchronised in Immersion Mode.
+ */
+export const breathRate = (health: number) => 0.011 + (1 - clamp01(health)) ** 2 * 0.041;
