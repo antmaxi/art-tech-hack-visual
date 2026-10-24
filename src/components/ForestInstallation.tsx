@@ -10,6 +10,7 @@ import {
   type YearRecord,
 } from "@/lib/forest-data";
 import { noise, rgb, vhiColor } from "@/lib/forest-art";
+import { ZauberparkConcept } from "@/components/ZauberparkConcept";
 
 const STATIONS = [
   { name: "Einsiedeln", id: "MeteoSwiss EIN", lat: 47.133042, lon: 8.756556, note: "Rain at Sihlsee." },
@@ -31,6 +32,9 @@ export function ForestInstallation() {
   const [sound, setSound] = useState(false);
   const [idle, setIdle] = useState(false);
   const [legend, setLegend] = useState(false);
+  const [zauberpark, setZauberpark] = useState(false);
+  const conceptOpen = useRef(false);
+  conceptOpen.current = zauberpark;
 
   const mean = baselineMean(years);
   const year = years[index] ?? years[0]!;
@@ -427,6 +431,7 @@ export function ForestInstallation() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (conceptOpen.current) return;
       if (e.key === "Escape") exitImmersive();
       if (e.key === " " && e.target === document.body) {
         e.preventDefault();
@@ -555,6 +560,15 @@ export function ForestInstallation() {
             Enter immersive mode
           </button>
         )}
+        <ZauberparkConcept
+          source={fieldEl}
+          container={wallRef}
+          open={zauberpark}
+          onOpenChange={setZauberpark}
+          sound={sound}
+          onToggleSound={() => setSound((s) => !s)}
+          year={year.year}
+        />
       </footer>
 
       {legend && !immersive && (
