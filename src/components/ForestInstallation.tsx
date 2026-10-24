@@ -67,18 +67,6 @@ export function ForestInstallation() {
       const polygons = MAP_REGIONS.map((region) => {
         const polygon = L.polygon(region.rings, { weight: 1, fillOpacity: 0.3 }).addTo(map as import('leaflet').Map);
         polygon.on('click', () => setRegionId(region.id));
-        const path = polygon.getElement();
-        if (path) {
-          path.setAttribute('tabindex', '0');
-          path.setAttribute('role', 'button');
-          path.setAttribute('aria-label', `Select ${regionLabel(region.id)}`);
-          path.addEventListener('keydown', (event) => {
-            if (!(event instanceof KeyboardEvent)) return;
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault(); event.stopPropagation(); setRegionId(region.id);
-            }
-          });
-        }
         return { id: region.id, polygon };
       });
       mapApi.current = {
@@ -90,7 +78,21 @@ export function ForestInstallation() {
             polygon.setStyle({ color: id === selected ? outline : color, fillColor: color,
               weight: id === selected ? 2.5 : 0.7, fillOpacity: annual?.vhi != null ? 0.42 : 0,
               dashArray: annual?.vhi == null ? '3 5' : undefined });
-            polygon.getElement()?.setAttribute('aria-pressed', String(id === selected));
+            const path = polygon.getElement();
+            if (path) {
+              path.setAttribute('aria-pressed', String(id === selected));
+              if (!path.hasAttribute('role')) {
+                path.setAttribute('tabindex', '0');
+                path.setAttribute('role', 'button');
+                path.setAttribute('aria-label', `Select ${regionLabel(id)}`);
+                path.addEventListener('keydown', (event) => {
+                  if (!(event instanceof KeyboardEvent)) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault(); event.stopPropagation(); setRegionId(id);
+                  }
+                });
+              }
+            }
             if (id === selected) polygon.bringToFront();
           });
         },
