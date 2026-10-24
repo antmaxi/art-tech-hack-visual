@@ -3,7 +3,7 @@ import { getRegionVhi } from "@/lib/vhi-source";
 
 // The Canopy must follow the selected year only where real data exists.
 describe("canopy year sync", () => {
-  it("uses the observed August VHI as the field mean and is not hypothetical", () => {
+  it("uses the annual regional VHI as the field mean and is not hypothetical", () => {
     const s = getRegionVhi(39, 62);
     expect(s.hypothetical).toBe(false);
     expect(s.mean).toBeCloseTo(0.62);

@@ -19,3 +19,10 @@
 - [x] Remove the specified panel captions and river markers without changing map framing or data layers.
 - [x] Remove Canopy information boxes while retaining planting and focus-scoped Delete/Backspace grove removal.
 - [x] Verify timeline, artwork, map layers and existing controls; five existing tests pass and browser checks report no runtime errors.
+
+# Swiss annual and regional data
+- [x] Remove only the top-right Forest title and year-range markup from panel 3, preserving the artwork.
+- [x] Import supplied monthly data; aggregate annual regional and national VHI with bounded monthly interpolation and provenance.
+- [x] Frame all Switzerland, select any supplied region on the map, and synchronise the unchanged Canopy.
+- [x] Use national annual means for the breathing field and timeline; play 1991–2025 at five seconds per year.
+- [x] Verify data rules, map selection, timeline, Canopy, and preserved controls.

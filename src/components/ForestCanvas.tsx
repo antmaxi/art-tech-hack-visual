@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { wmsUrlFor } from "@/lib/map-geo";
-import { getRegion, getRegionVhi, regionFrame } from "@/lib/vhi-source";
+import { getRegion, getRegionVhi, regionFrame, regionLabel } from "@/lib/vhi-source";
 
 function cssVar(n: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -119,17 +119,17 @@ export function ForestCanvas({
   rain: number;
   airTemp: number;
   flow: number;
-  /** Observed August VHI (0..100) for the selected year; null/undefined = no observation. */
+  /** Annual regional VHI (0..100); null/undefined = no observation. */
   vhi?: number | null;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const live = useRef({ rain, airTemp, flow });
+  const live = useRef({ rain, airTemp, flow, vhi });
   const api = useRef<{ clear: () => void }>({ clear: () => {} });
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    live.current = { rain, airTemp, flow };
-  }, [rain, airTemp, flow]);
+    live.current = { rain, airTemp, flow, vhi };
+  }, [rain, airTemp, flow, vhi]);
 
   useEffect(() => {
     let raf = 0;
@@ -137,7 +137,7 @@ export function ForestCanvas({
     let cleanup = () => {};
     const region = getRegion(regionId);
     const { bbox, W, H, toPx } = regionFrame(region);
-    const vhiSrc = getRegionVhi(region.id, vhi);
+    const vhiSrc = getRegionVhi(region.id, live.current.vhi);
     setReady(false);
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
@@ -158,7 +158,8 @@ export function ForestCanvas({
       ctx.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * offx, dpr * offy);
     };
     resize();
-    window.addEventListener("resize", resize);
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
 
     (async () => {
       const cover = await loadImg(wmsUrlFor("ch.swisstopo.vec200-landcover", bbox, W, H));
@@ -326,6 +327,7 @@ export function ForestCanvas({
 
       let t = 0;
       let f = 0;
+      let healthVhi = live.current.vhi;
       setReady(true);
 
       const loop = () => {
@@ -339,6 +341,12 @@ export function ForestCanvas({
         ctx.globalAlpha = 1;
 
         const s = live.current;
+        if (healthVhi !== s.vhi) {
+          healthVhi = s.vhi;
+          const source = getRegionVhi(region.id, s.vhi);
+          for (const i of cells) health[i] = source.field((i % W) / W, ((i / W) | 0) / H);
+          for (const tr of trees) tr.health = health[((tr.hy | 0) * W + (tr.hx | 0)) | 0] ?? 0.5;
+        }
         const heat = Math.min(1, Math.max(0, (s.airTemp - 5) / 22));
         const rainDeep = Math.min(0.35, s.rain * 0.18);
         const gust = !!pointer && pointer.down && pointer.moved;
@@ -423,10 +431,10 @@ export function ForestCanvas({
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      resizeObserver.disconnect();
       cleanup();
     };
-  }, [regionId, vhi]);
+  }, [regionId]);
 
   return (
     <>
@@ -434,7 +442,9 @@ export function ForestCanvas({
         ref={ref}
         className="forest-canvas absolute inset-0 h-full w-full"
         tabIndex={0}
-        aria-label="Interactive painting of the Zurich region's forests, breathing. Tap to plant a grove; Delete or Backspace removes your groves."
+        aria-label={`Interactive painting of ${regionLabel(regionId)} forests, breathing. Tap to plant a grove; Delete or Backspace removes your groves.`}
+        data-region-id={regionId}
+        data-annual-vhi={vhi ?? 'missing'}
         onPointerDown={() => ref.current?.focus({ preventScroll: true })}
         onKeyDown={(event) => {
           if (event.key === "Delete" || event.key === "Backspace") {
