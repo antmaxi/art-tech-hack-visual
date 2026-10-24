@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import setting from "@/assets/zauberpark-airport-park.jpg.asset.json";
+import setting from "@/assets/forest-mockup-setting.jpg";
+import styles from "./ZauberparkConcept.module.css";
 
 type Props = {
   source: RefObject<HTMLCanvasElement | null>;
@@ -22,18 +23,27 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     if (!target || !ctx) return;
     target.width = 1800;
     target.height = 1200;
-    // Photo-space corners of the clear grassy slope, not a new screen.
-    const corners = [[490, 1030], [1760, 890], [1775, 1140], [850, 1180]];
-    const surface = (u: number, v: number) => {
+    // Geometry belongs only to this reference mockup, never to the shared artwork.
+    type Surface = { corners: number[][]; alpha: number; bend: number };
+    const surfaces: Surface[] = [
+      { corners: [[610, 780], [1320, 780], [1780, 1198], [0, 1198]], alpha: 1, bend: 20 },
+      { corners: [[500, 0], [560, 0], [375, 830], [280, 830]], alpha: 0.95, bend: 9 },
+      { corners: [[1440, 0], [1520, 0], [1630, 920], [1540, 920]], alpha: 0.8, bend: 8 },
+      { corners: [[830, 425], [863, 420], [823, 780], [787, 790]], alpha: 0.8, bend: 4 },
+      { corners: [[1160, 510], [1190, 510], [1210, 790], [1172, 790]], alpha: 0.75, bend: 4 },
+      { corners: [[580, 15], [1390, 0], [1420, 610], [650, 645]], alpha: 0.55, bend: 35 },
+      { corners: [[0, 0], [430, 20], [375, 580], [0, 650]], alpha: 0.3, bend: 24 },
+    ];
+    const surface = (corners: number[][], u: number, v: number, bend: number) => {
       const [a, b, c, d] = corners;
       if (!a || !b || !c || !d) return [0, 0];
       return [
-        (a[0] ?? 0) * (1-u)*(1-v) + (b[0] ?? 0)*u*(1-v) + (c[0] ?? 0)*u*v + (d[0] ?? 0)*(1-u)*v,
-        (a[1] ?? 0) * (1-u)*(1-v) + (b[1] ?? 0)*u*(1-v) + (c[1] ?? 0)*u*v + (d[1] ?? 0)*(1-u)*v,
+        (a[0] ?? 0) * (1-u)*(1-v) + (b[0] ?? 0)*u*(1-v) + (c[0] ?? 0)*u*v + (d[0] ?? 0)*(1-u)*v + Math.sin(v * Math.PI) * Math.sin(u * Math.PI * 2) * bend,
+        (a[1] ?? 0) * (1-u)*(1-v) + (b[1] ?? 0)*u*(1-v) + (c[1] ?? 0)*u*v + (d[1] ?? 0)*(1-u)*v + Math.sin(u * Math.PI) * Math.sin(v * Math.PI * 2) * bend,
       ];
     };
-    const tile = (original: HTMLCanvasElement, u: number, v: number, du: number, dv: number, lower: boolean) => {
-      const p = surface(u, v), q = surface(u+du, v), r = surface(u, v+dv), s = surface(u+du, v+dv);
+    const tile = (original: HTMLCanvasElement, patch: Surface, u: number, v: number, du: number, dv: number, lower: boolean) => {
+      const p = surface(patch.corners,u,v,patch.bend), q = surface(patch.corners,u+du,v,patch.bend), r = surface(patch.corners,u,v+dv,patch.bend), s = surface(patch.corners,u+du,v+dv,patch.bend);
       const sx = u*original.width, sy = v*original.height;
       const sw = du*original.width, sh = dv*original.height;
       const x = p[0] ?? 0, y = p[1] ?? 0;
@@ -59,26 +69,28 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
       const original = source.current;
       if (original && original.width > 0 && original.height > 0 && time - previous >= 50) {
         ctx.clearRect(0,0,target.width,target.height);
-        for (let row=0; row<8; row++) for (let column=0; column<16; column++) {
-          tile(original,column/16,row/8,1/16,1/8,false);
-          tile(original,column/16,row/8,1/16,1/8,true);
+        for (const patch of surfaces) {
+          ctx.globalAlpha = patch.alpha;
+          for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
+            tile(original,patch,column/20,row/12,1/20,1/12,false);
+            tile(original,patch,column/20,row/12,1/20,1/12,true);
+          }
         }
-        // Feather the lit footprint so contours illuminate grass, not a hard rectangle.
-        ctx.globalCompositeOperation = "destination-in";
-        const fade = ctx.createLinearGradient(0,890,0,1200);
-        fade.addColorStop(0,"transparent");
-        fade.addColorStop(0.22,"white");
-        fade.addColorStop(0.78,"white");
-        fade.addColorStop(1,"transparent");
-        ctx.fillStyle=fade; ctx.fillRect(0,0,target.width,target.height);
-        ctx.save();
-        ctx.translate(1160,1045); ctx.scale(1,0.25);
-        const footprint = ctx.createRadialGradient(0,0,0,0,0,630);
-        footprint.addColorStop(0,"white");
-        footprint.addColorStop(0.6,"white");
-        footprint.addColorStop(1,"transparent");
-        ctx.fillStyle=footprint; ctx.fillRect(-1800,-4800,3600,9600);
-        ctx.restore();
+        ctx.globalAlpha = 1;
+        // Keep the physical festival sign and foreground visitors free of projected lines.
+        ctx.globalCompositeOperation = "destination-out";
+        const exclusions = [
+          [[1590,355],[1800,275],[1800,990],[1635,970]],
+          [[850,650],[905,635],[942,720],[940,895],[875,940],[842,900],[839,765]],
+          [[0,585],[125,570],[220,710],[156,1070],[0,1160]],
+          [[1105,715],[1137,715],[1170,765],[1172,855],[1120,861],[1100,785]],
+          [[1210,710],[1240,710],[1267,765],[1263,850],[1219,853],[1205,775]],
+        ];
+        for (const polygon of exclusions) {
+          ctx.beginPath();
+          polygon.forEach((point,i) => { const x = point[0] ?? 0, y = point[1] ?? 0; if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+          ctx.closePath(); ctx.fill();
+        }
         ctx.globalCompositeOperation = "source-over";
         previous = time;
       }
@@ -88,7 +100,7 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
   }, [source, animated]);
-  return <canvas ref={canvas} className="zauber-projection" aria-label="The existing Forest artwork proposed as a light projection onto the real Airport Park hillside" />;
+  return <canvas ref={canvas} className={`zauber-projection ${styles.projection}`} aria-label="Live Forest artwork projected across the forest floor, tree trunks and canopy in an illustrative festival mockup" />;
 }
 
 function ConceptScene({ source, sound, onToggleSound, year }: Props) {
@@ -97,8 +109,8 @@ function ConceptScene({ source, sound, onToggleSound, year }: Props) {
   return (
     <>
       <div className="zauber-environment" aria-hidden="true">
-        <div className="zauber-stage">
-          <img src={setting.url} width={1800} height={1200} alt="" className="zauber-setting" />
+        <div className={`zauber-stage ${styles.stage}`}>
+          <img src={setting} width={1800} height={1200} alt="" className="zauber-setting" />
           <Projection source={source} animated={animated} />
         </div>
       </div>
@@ -117,7 +129,7 @@ function ConceptScene({ source, sound, onToggleSound, year }: Props) {
           <Dialog.Description>
             An imagined outdoor light installation translating Swiss forest vegetation data into a living landscape of light, movement and sound.
           </Dialog.Description>
-           <p className="zauber-disclaimer">Conceptual projection on an authentic Zauberpark venue photograph. Not an existing installation; not commissioned or approved by Zauberpark. The artwork uses unverified prototype values. Photo: (C) Flughafen Zürich AG · <a href="https://newsroom.flughafen-zuerich.ch/en/photos-zauberpark/" target="_blank" rel="noreferrer">official gallery</a>.</p>
+            <p className="zauber-disclaimer">Illustrative forest setting adapted from the supplied reference. The festival sign is part of the mockup, not an event announcement. Not an existing installation; not commissioned or approved by Zauberpark.</p>
         </div>
         <div className="zauber-controls">
           <span className="zauber-year">August {animated ? year : stillYear}</span>
@@ -141,7 +153,7 @@ export function ZauberparkConcept(props: Props) {
         <Button variant="ghost" className="forest-zauber-entry">IMAGINE THIS AT ZAUBERPARK ↗</Button>
       </Dialog.Trigger>
       <Dialog.Portal container={props.container.current}>
-        <Dialog.Content className="zauber-view" onEscapeKeyDown={(event) => event.stopPropagation()}>
+        <Dialog.Content className={`zauber-view ${styles.mockup}`} onEscapeKeyDown={(event) => event.stopPropagation()}>
           <ConceptScene {...props} />
         </Dialog.Content>
       </Dialog.Portal>
