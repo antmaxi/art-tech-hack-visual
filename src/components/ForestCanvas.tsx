@@ -158,7 +158,8 @@ export function ForestCanvas({
       ctx.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * offx, dpr * offy);
     };
     resize();
-    window.addEventListener("resize", resize);
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
 
     (async () => {
       const cover = await loadImg(wmsUrlFor("ch.swisstopo.vec200-landcover", bbox, W, H));
@@ -430,7 +431,7 @@ export function ForestCanvas({
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      resizeObserver.disconnect();
       cleanup();
     };
   }, [regionId]);
