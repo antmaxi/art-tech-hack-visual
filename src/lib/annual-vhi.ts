@@ -108,3 +108,17 @@ export function nationalAnnual(year: number) {
     interpolatedMonths: regions.reduce((sum, r) => sum + r.interpolatedMonths, 0),
   };
 }
+
+/** Observed record bounds across every region and year, derived from the supplied CSV. */
+export const VHI_RANGE = (() => {
+  const values = ANNUAL_REGIONAL_VHI.filter((r) => r.vhi != null).map((r) => r.vhi!);
+  return { min: Math.min(...values), max: Math.max(...values) };
+})();
+
+/**
+ * Expressive health 0..1: the worst year in the record becomes 0 (maximum drought),
+ * the best becomes 1 (peak health). Raw VHI never spans 0..100, so the visuals
+ * calibrate against what actually happened. Null (no observation) stays neutral.
+ */
+export const normalizeVhi = (vhi: number | null | undefined) =>
+  vhi == null ? 0.5 : Math.min(1, Math.max(0, (vhi - VHI_RANGE.min) / (VHI_RANGE.max - VHI_RANGE.min)));
