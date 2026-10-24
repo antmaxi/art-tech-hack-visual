@@ -55,3 +55,11 @@ describe('immersive-only Canopy data scope', () => {
     expect(regional.field(0.1, 0.2)).not.toBe(canopyHealthSource(47, 33.625, 'national').field(0.1, 0.2));
   });
 });
+describe('all-Switzerland selection', () => {
+  it('uses the national mean outside immersion when all of Switzerland is selected', async () => {
+    const { ALL_SWITZERLAND, isNationalScope } = await import('@/lib/canopy-scope');
+    expect(canopyAnnualVhi(2009, ALL_SWITZERLAND, false)).toBe(nationalAnnual(2009).vhi);
+    expect(isNationalScope(ALL_SWITZERLAND, false)).toBe(true);
+    expect(isNationalScope(47, false)).toBe(false);
+  });
+});
