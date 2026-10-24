@@ -11,6 +11,7 @@ import {
 } from "@/lib/forest-data";
 import { noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
+import { ForestCanvas } from "@/components/ForestCanvas";
 
 const STATIONS = [
   { name: "Einsiedeln", id: "MeteoSwiss EIN", lat: 47.133042, lon: 8.756556, note: "Rain at Sihlsee." },
@@ -45,7 +46,7 @@ export function ForestInstallation() {
 
   const wallRef = useRef<HTMLDivElement>(null);
   const mapEl = useRef<HTMLDivElement>(null);
-  const timeEl = useRef<HTMLCanvasElement>(null);
+  const tlEl = useRef<HTMLCanvasElement>(null);
   const fieldEl = useRef<HTMLCanvasElement>(null);
   const mapApi = useRef<{ show: (y: YearRecord) => void; resize: () => void } | null>(null);
   const audio = useRef<{ ctx: AudioContext; set: (vhi: number, breath: number, stress: number) => void } | null>(null);
@@ -128,11 +129,11 @@ export function ForestInstallation() {
     return () => clearTimeout(t);
   }, [playing, index, years.length, year.vhi]);
 
-  // ---------- animation: PANEL 2 + PANEL 3 ----------
+  // ---------- animation: bottom timeline + PANEL 3 ----------
   useEffect(() => {
-    const time = timeEl.current!;
+    const tl = tlEl.current!;
     const field = fieldEl.current!;
-    const tctx = time.getContext("2d")!;
+    const tlctx = tl.getContext("2d")!;
     const fctx = field.getContext("2d")!;
     const low = document.createElement("canvas");
     const lctx = low.getContext("2d")!;
@@ -140,9 +141,9 @@ export function ForestInstallation() {
 
     const fit = () => {
       const dpr = Math.min(2, devicePixelRatio || 1);
-      const tr = time.getBoundingClientRect();
-      time.width = Math.max(2, Math.floor(tr.width * dpr));
-      time.height = Math.max(2, Math.floor(tr.height * dpr));
+      const lr = tl.getBoundingClientRect();
+      tl.width = Math.max(2, Math.floor(lr.width * dpr));
+      tl.height = Math.max(2, Math.floor(lr.height * dpr));
       const fr = field.getBoundingClientRect();
       field.width = Math.max(2, Math.floor(fr.width * dpr));
       field.height = Math.max(2, Math.floor(fr.height * dpr));
@@ -158,7 +159,7 @@ export function ForestInstallation() {
       fit();
       mapApi.current?.resize();
     });
-    ro.observe(time);
+    ro.observe(tl);
     ro.observe(field);
 
     // particles
@@ -178,77 +179,79 @@ export function ForestInstallation() {
     let phase = 0;
     let raf = 0;
 
-    const drawTime = (t: number) => {
-      const { years: ys, index: idx } = live.current;
-      const w = time.width;
-      const h = time.height;
+    // chronological timeline along the bottom: one band per year, left to right
+    const drawTimeline = (t: number) => {
+      const { years: ys, index: idx, mean: m } = live.current;
+      const w = tl.width;
+      const h = tl.height;
       const n = ys.length;
-      const gutter = Math.round(w * 0.16);
-      tctx.fillStyle = "#070a08";
-      tctx.fillRect(0, 0, w, h);
-      const fs = Math.max(9, Math.min(13, (h / n) * 0.42));
-      tctx.font = `${fs}px "IBM Plex Mono", monospace`;
-      tctx.textBaseline = "middle";
+      tlctx.clearRect(0, 0, w, h);
+      const bw = w / n;
+      const labelH = Math.max(13, h * 0.3);
+      const bh = h - labelH - 4;
+      const fs = Math.max(9, Math.min(11, bw * 1.2));
+      tlctx.font = `${fs}px "IBM Plex Mono", monospace`;
+      tlctx.textBaseline = "alphabetic";
       ys.forEach((y, i) => {
-        const y0 = Math.floor((i / n) * h);
-        const y1 = Math.floor(((i + 1) / n) * h);
-        const mid = (y0 + y1) / 2;
-        const rh = y1 - y0;
+        const x0 = i * bw;
+        const sel = i === idx;
         if (y.vhi == null) {
           // missing: dark band with fine hatching
-          tctx.fillStyle = "#0d100e";
-          tctx.fillRect(gutter, y0, w - gutter, rh);
-          tctx.strokeStyle = "rgba(200,210,200,0.14)";
-          tctx.lineWidth = 1;
-          tctx.beginPath();
-          for (let x = gutter - rh; x < w; x += 7) {
-            tctx.moveTo(x, y1);
-            tctx.lineTo(x + rh, y0);
+          tlctx.fillStyle = "#0d100e";
+          tlctx.fillRect(x0, 2, bw - 1, bh);
+          tlctx.save();
+          tlctx.beginPath();
+          tlctx.rect(x0, 2, bw - 1, bh);
+          tlctx.clip();
+          tlctx.strokeStyle = "rgba(200,210,200,0.14)";
+          tlctx.lineWidth = 1;
+          tlctx.beginPath();
+          for (let x = x0 - bh; x < x0 + bw; x += 7) {
+            tlctx.moveTo(x, 2 + bh);
+            tlctx.lineTo(x + bh, 2);
           }
-          tctx.stroke();
+          tlctx.stroke();
+          tlctx.restore();
           if (y.status === "not-yet") {
-            tctx.setLineDash([2, 5]);
-            tctx.strokeStyle = "rgba(120,220,160,0.5)";
-            tctx.strokeRect(gutter + 0.5, y0 + 1.5, w - gutter - 1, rh - 3);
-            tctx.setLineDash([]);
+            tlctx.setLineDash([2, 5]);
+            tlctx.strokeStyle = "rgba(120,220,160,0.5)";
+            tlctx.strokeRect(x0 + 0.5, 2.5, bw - 2, bh - 1);
+            tlctx.setLineDash([]);
           }
         } else {
           const base = vhiColor(y.vhi);
-          const g = tctx.createLinearGradient(gutter, 0, w, 0);
-          g.addColorStop(0, rgb(base, 0.35));
-          g.addColorStop(0.5, rgb(base.map((c) => Math.min(255, c + 30))));
-          g.addColorStop(1, rgb(base, 0.55));
-          tctx.fillStyle = g;
-          tctx.fillRect(gutter, y0, w - gutter, rh - 1);
+          const g = tlctx.createLinearGradient(0, 2, 0, 2 + bh);
+          g.addColorStop(0, rgb(base.map((c) => Math.min(255, c + 30))));
+          g.addColorStop(1, rgb(base, 0.45));
+          tlctx.fillStyle = g;
+          tlctx.fillRect(x0, 2, bw - 1, bh);
           // flowing line: amplitude = distance from mean
-          const dev = (y.vhi - live.current.mean) / 30;
-          tctx.strokeStyle = "rgba(235,250,240,0.35)";
-          tctx.lineWidth = 1;
-          tctx.beginPath();
-          for (let x = gutter; x <= w; x += 4) {
+          const dev = (y.vhi - m) / 30;
+          tlctx.strokeStyle = "rgba(235,250,240,0.35)";
+          tlctx.lineWidth = 1;
+          tlctx.beginPath();
+          for (let x = x0; x <= x0 + bw - 1; x += 3) {
             const yy =
-              mid + Math.sin(x * 0.025 + i * 0.7 + t * 0.0006) * rh * 0.22 * (0.3 + Math.abs(dev)) +
-              noise(x * 0.01, i + t * 0.0002) * rh * 0.15;
-            if (x === gutter) tctx.moveTo(x, yy);
-            else tctx.lineTo(x, yy);
+              2 +
+              bh / 2 +
+              Math.sin(x * 0.05 + i * 0.7 + t * 0.0006) * bh * 0.22 * (0.3 + Math.abs(dev)) +
+              noise(x * 0.02, i + t * 0.0002) * bh * 0.12;
+            if (x === x0) tlctx.moveTo(x, yy);
+            else tlctx.lineTo(x, yy);
           }
-          tctx.stroke();
+          tlctx.stroke();
         }
-        const sel = i === idx;
-        tctx.fillStyle = sel ? "#d9f7e3" : y.vhi == null ? "rgba(200,210,200,0.35)" : "rgba(200,220,205,0.7)";
-        tctx.fillText(String(y.year), Math.round(w * 0.025), mid);
-        if (y.vhi != null) {
-          tctx.fillStyle = sel ? "#d9f7e3" : "rgba(200,220,205,0.45)";
-          tctx.fillText(String(y.vhi), Math.round(w * 0.025) + fs * 3.2, mid);
+        // year markers: every five years, plus the endpoints and the selection
+        if (i % 5 === 0 || i === n - 1 || sel) {
+          tlctx.fillStyle = sel ? "#d9f7e3" : "rgba(200,220,205,0.55)";
+          tlctx.fillText(String(y.year), x0 + 1, h - 3);
         }
         if (sel) {
-          tctx.strokeStyle = "#d9f7e3";
-          tctx.lineWidth = Math.max(1, devicePixelRatio);
-          tctx.strokeRect(gutter + 0.5, y0 + 0.5, w - gutter - 1, rh - 1);
+          tlctx.strokeStyle = "#d9f7e3";
+          tlctx.lineWidth = Math.max(1, devicePixelRatio);
+          tlctx.strokeRect(x0 + 0.5, 1.5, bw - 2, bh + 1);
         }
       });
-      // mean marker
-      tctx.fillStyle = "rgba(217,247,227,0.6)";
     };
 
     const drawField = () => {
@@ -347,7 +350,7 @@ export function ForestInstallation() {
     };
 
     const loop = (t: number) => {
-      drawTime(t);
+      drawTimeline(t);
       drawField();
       raf = requestAnimationFrame(loop);
     };
@@ -473,7 +476,7 @@ export function ForestInstallation() {
 
   const pickYear = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    setIndex(clamp(Math.floor(((e.clientY - r.top) / r.height) * years.length), 0, years.length - 1));
+    setIndex(clamp(Math.floor(((e.clientX - r.left) / r.width) * years.length), 0, years.length - 1));
   };
 
   const delta = year.vhi == null ? null : year.vhi - mean;
@@ -495,18 +498,9 @@ export function ForestInstallation() {
           </div>
         </section>
 
-        <section className="forest-sheet forest-sheet-side" aria-label="Time and memory">
-          <canvas ref={timeEl} className="forest-canvas forest-timeline forest-clickable" onClick={pickYear} />
-          <div className="forest-spine">02 · Time / Memory</div>
-          <div className="forest-cap">
-            <b>
-              {first} – {last}
-            </b>
-            every August, one band each · click a year
-            <span className="forest-sub forest-key">
-              <i className="k-data" /> observed <i className="k-miss" /> no valid data <i className="k-next" /> not yet
-            </span>
-          </div>
+        <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
+          <ForestCanvas regionId={39} vhi={year.vhi} year={year.year} rain={0} airTemp={10} flow={0} />
+          <div className="forest-spine">02 · Canopy</div>
         </section>
 
         <section className="forest-sheet forest-sheet-field" aria-label="The forest breathes">
@@ -529,46 +523,45 @@ export function ForestInstallation() {
       </div>
 
       <footer className="forest-bar">
-        <button type="button" onClick={() => setPlaying((p) => !p)}>
-          {playing ? "Pause" : "Play"}
-        </button>
-        <input
-          className="forest-range"
-          type="range"
-          min={0}
-          max={years.length - 1}
-          value={index}
-          onChange={(e) => setIndex(Number(e.target.value))}
-          aria-label="Year"
+        <canvas
+          ref={tlEl}
+          className="forest-tl forest-clickable"
+          onClick={pickYear}
+          aria-label={`Timeline ${first} to ${last}, one band per August; click a year`}
         />
-        <span className="forest-year">{year.year}</span>
-        <button type="button" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
-          Sound {sound ? "on" : "off"}
-        </button>
-        <button type="button" onClick={() => setLegend((l) => !l)} aria-expanded={legend} className="forest-only-panels">
-          Legend
-        </button>
-        <a className="forest-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
-          Source: swissEO VHI
-        </a>
-        {immersive ? (
-          <button type="button" onClick={exitImmersive}>
-            Exit · Esc
+        <div className="forest-bar-row">
+          <button type="button" onClick={() => setPlaying((p) => !p)}>
+            {playing ? "Pause" : "Play"}
           </button>
-        ) : (
-          <button type="button" className="forest-enter" onClick={enterImmersive}>
-            Enter immersive mode
+          <span className="forest-year">{year.year}</span>
+          <button type="button" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
+            Sound {sound ? "on" : "off"}
           </button>
-        )}
-        <ZauberparkConcept
-          source={fieldEl}
-          container={wallRef}
-          open={zauberpark}
-          onOpenChange={setZauberpark}
-          sound={sound}
-          onToggleSound={() => setSound((s) => !s)}
-          year={year.year}
-        />
+          <button type="button" onClick={() => setLegend((l) => !l)} aria-expanded={legend} className="forest-only-panels">
+            Legend
+          </button>
+          <a className="forest-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
+            Source: swissEO VHI
+          </a>
+          {immersive ? (
+            <button type="button" onClick={exitImmersive}>
+              Exit · Esc
+            </button>
+          ) : (
+            <button type="button" className="forest-enter" onClick={enterImmersive}>
+              Enter immersive mode
+            </button>
+          )}
+          <ZauberparkConcept
+            source={fieldEl}
+            container={wallRef}
+            open={zauberpark}
+            onOpenChange={setZauberpark}
+            sound={sound}
+            onToggleSound={() => setSound((s) => !s)}
+            year={year.year}
+          />
+        </div>
       </footer>
 
       {legend && !immersive && (
