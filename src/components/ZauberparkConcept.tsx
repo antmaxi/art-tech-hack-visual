@@ -50,10 +50,10 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
       // Forest floor and path, widening from the vanishing point toward the camera.
       { corners: [[650, 720], [950, 720], [1800, 1131], [0, 1131]], alpha: 1, bend: 16 },
       // Tall trunks carry the projection vertically: Canopy above, field below.
-      { corners: [[222, 0], [398, 0], [430, 1131], [170, 1131]], alpha: 0.9, bend: 8 },
+      { corners: [[222, 0], [398, 0], [415, 1000], [185, 1000]], alpha: 0.9, bend: 8 },
       { corners: [[478, 0], [575, 0], [600, 850], [455, 850]], alpha: 0.85, bend: 7 },
       { corners: [[637, 0], [734, 0], [760, 760], [615, 760]], alpha: 0.8, bend: 6 },
-      { corners: [[1138, 0], [1257, 0], [1290, 980], [1115, 980]], alpha: 0.85, bend: 8 },
+      { corners: [[1138, 0], [1257, 0], [1285, 950], [1120, 950]], alpha: 0.85, bend: 8 },
       { corners: [[1280, 0], [1365, 0], [1395, 860], [1265, 860]], alpha: 0.7, bend: 6 },
       // Upper canopy foliage and the left forest edge.
       { corners: [[380, 0], [1420, 0], [1520, 430], [330, 460]], alpha: 0.5, bend: 28 },
