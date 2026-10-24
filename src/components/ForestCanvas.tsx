@@ -113,21 +113,32 @@ export function ForestCanvas({
   airTemp,
   flow,
   regionId,
+  vhi,
+  year,
 }: {
   regionId: number;
   rain: number;
   airTemp: number;
   flow: number;
+  /** Observed August VHI (0..100) for the selected year; null/undefined = no observation. */
+  vhi?: number | null;
+  year?: number;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const live = useRef({ rain, airTemp, flow });
   const api = useRef<{ clear: () => void }>({ clear: () => {} });
   const [ready, setReady] = useState(false);
   const [groves, setGroves] = useState(0);
-  const [report, setReport] = useState<{ cover: number; stress: number | null; health: number }>({
+  const [report, setReport] = useState<{
+    cover: number;
+    stress: number | null;
+    health: number;
+    hypothetical: boolean;
+  }>({
     cover: 0,
     stress: null,
     health: 0.5,
+    hypothetical: true,
   });
 
   useEffect(() => {
@@ -140,7 +151,7 @@ export function ForestCanvas({
     let cleanup = () => {};
     const region = getRegion(regionId);
     const { bbox, W, H, toPx } = regionFrame(region);
-    const vhiSrc = getRegionVhi(region.id);
+    const vhiSrc = getRegionVhi(region.id, vhi);
     setReady(false);
     setGroves(0);
     const canvas = ref.current!;
@@ -234,7 +245,8 @@ export function ForestCanvas({
       ground.width = W;
       ground.height = H;
       const gc = ground.getContext("2d")!;
-      gc.fillStyle = cssVar("--background");
+      // the canopy grows out of pure black
+      gc.fillStyle = "#000";
       gc.fillRect(0, 0, W, H);
       gc.globalAlpha = 0.16;
       gc.fillStyle = deepC;
@@ -342,6 +354,7 @@ export function ForestCanvas({
         cover: cells.length / (W * H),
         stress: healthy + stressed > 0 ? stressed / (healthy + stressed) : null,
         health: sum / cells.length,
+        hypothetical: vhiSrc.hypothetical,
       });
 
       const loop = () => {
@@ -442,7 +455,7 @@ export function ForestCanvas({
       window.removeEventListener("resize", resize);
       cleanup();
     };
-  }, [regionId]);
+  }, [regionId, vhi]);
 
   const heat = Math.min(1, Math.max(0, (airTemp - 5) / 22));
   const breath = 9 - report.health * 3 - heat * 2.5;
@@ -469,7 +482,9 @@ export function ForestCanvas({
             : ""}
           {report.stress == null
             ? "no reading on it yet"
-            : `${Math.round(report.stress * 100)}% of it under drought stress (hypothetical VHI)`}
+            : `${Math.round(report.stress * 100)}% of it under drought stress (${
+                report.hypothetical ? "hypothetical VHI" : `swissEO VHI${year ? `, August ${year}` : ""}`
+              })`}
         </p>
       </div>
       <div className="absolute bottom-8 right-8 max-w-xs rounded-sm bg-background/80 px-4 py-3 text-right text-xs text-foreground/80 backdrop-blur-sm md:bottom-12 md:right-14">
