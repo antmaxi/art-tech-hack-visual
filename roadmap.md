@@ -9,8 +9,8 @@
 - [x] Verify the concept and preserved controls.
 
 # Canopy integration + bottom timeline
-- [ ] Copy Canopy (ForestCanvas) code and its data/geo libs into the project; add its colour tokens.
-- [ ] Replace panel 2 (time/memory) with the Canopy, preserving its design and pure black background.
-- [ ] Rebuild the footer as a chronological bottom timeline with year markers and click selection.
-- [ ] Sync selected year into the Canopy (real VHI only; missing years keep the labelled hypothetical field).
-- [ ] Verify build, tests and browser behaviour (timeline selection, canopy year switch, immersive, Zauberpark).
+- [x] Copy Canopy (ForestCanvas) code and its data/geo libs into the project; add its colour tokens.
+- [x] Replace panel 2 (time/memory) with the Canopy, preserving its design and pure black background.
+- [x] Rebuild the footer as a chronological bottom timeline with year markers and click selection.
+- [x] Sync selected year into the Canopy (real VHI only; missing years keep the labelled hypothetical field).
+- [x] Verify build, tests and browser behaviour (timeline selection, canopy year switch, immersive, Zauberpark).
