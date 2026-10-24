@@ -1,4 +1,6 @@
 # Immersive national Canopy
+- [x] Expand the immersive-only live forest projection across terrain, trunks and canopy using the reference image.
+- [x] Verify visible coverage, live animation, timeline/pause controls and unchanged normal interface.
 - [x] Decouple immersive health-field data from region identity and prevent stale health during terrain loading.
 - [x] Verify all-region national values, selection independence during immersion, and regional restoration.
 - [x] Layer the existing Canopy with the breathing artwork only in Immersion Mode, using national annual VHI.
