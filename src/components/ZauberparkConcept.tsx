@@ -89,7 +89,7 @@ export function ZauberparkConcept(props: Props) {
         <Button variant="ghost" className="forest-zauber-entry">IMAGINE THIS AT ZAUBERPARK ↗</Button>
       </Dialog.Trigger>
       <Dialog.Portal container={props.container.current}>
-        <Dialog.Content className="zauber-view">
+        <Dialog.Content className="zauber-view" onEscapeKeyDown={(event) => event.stopPropagation()}>
           <ConceptScene {...props} />
         </Dialog.Content>
       </Dialog.Portal>
