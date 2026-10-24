@@ -29,6 +29,7 @@ export function ForestInstallation() {
   const year = years[index] ?? years[0]!;
   const canopyVhi = canopyAnnualVhi(year.year, regionId, immersive);
   const immersiveTerrainRegion = useRef(regionId);
+  const canopyHostEl = useRef<HTMLElement | null>(null);
 
   // live values for the animation loop
   const live = useRef({ years, index, mean, immersive, regionId });
