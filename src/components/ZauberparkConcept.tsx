@@ -35,12 +35,37 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
     canopyLight.height = 480;
     const canopyContext = canopyLight.getContext("2d", { willReadFrequently: true });
     if (!fieldContext || !canopyContext) return;
+    // Surface mask from the photograph: foliage receives light through its own leaf texture
+    // (bright leaves catch it, gaps between them fall dark); the smooth path receives it fully.
+    const surfaceMask = document.createElement("canvas");
+    surfaceMask.width = 1800;
+    surfaceMask.height = 1131;
+    const maskContext = surfaceMask.getContext("2d", { willReadFrequently: true });
+    let maskReady = false;
+    const photo = new Image();
+    photo.onload = () => {
+      if (!maskContext) return;
+      maskContext.drawImage(photo, 0, 0, 1800, 1131);
+      const px = maskContext.getImageData(0, 0, 1800, 1131);
+      for (let i = 0; i < px.data.length; i += 4) {
+        const lum = (px.data[i] ?? 0) * 0.3 + (px.data[i+1] ?? 0) * 0.6 + (px.data[i+2] ?? 0) * 0.1;
+        px.data[i+3] = Math.round(255 * (0.3 + 0.7 * Math.min(1, lum / 70)));
+      }
+      maskContext.putImageData(px, 0, 0);
+      maskContext.globalCompositeOperation = "source-over";
+      maskContext.fillStyle = "#fff";
+      maskContext.beginPath();
+      maskContext.moveTo(772, 726); maskContext.lineTo(922, 726); maskContext.lineTo(1800, 1131); maskContext.lineTo(0, 1131);
+      maskContext.closePath(); maskContext.fill();
+      maskReady = true;
+    };
+    photo.src = setting;
     const threshold = (plate: CanvasRenderingContext2D, original: HTMLCanvasElement, floor: number) => {
       plate.drawImage(original, 0, 0, plate.canvas.width, plate.canvas.height);
       const pixels = plate.getImageData(0, 0, plate.canvas.width, plate.canvas.height);
       for (let i = 0; i < pixels.data.length; i += 4) {
         const luminance = (pixels.data[i] ?? 0) * 0.2126 + (pixels.data[i+1] ?? 0) * 0.7152 + (pixels.data[i+2] ?? 0) * 0.0722;
-        pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - floor) * 3.5));
+        pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - floor) * 7));
       }
       plate.putImageData(pixels, 0, 0);
     };
@@ -48,10 +73,10 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
     type Surface = { corners: number[][]; alpha: number; bend: number; plate: "canopy" | "field" };
     const surfaces: Surface[] = [
       // Smooth path and ground, widening from the vanishing point toward the camera: topographic field.
-      { corners: [[790, 732], [905, 732], [1480, 1131], [20, 1131]], alpha: 1, bend: 10, plate: "field" },
+      { corners: [[772, 726], [922, 726], [1800, 1131], [0, 1131]], alpha: 1, bend: 4, plate: "field" },
       // Shrub walls on both sides of the path: Canopy light following the foliage.
-      { corners: [[0, 60], [730, 470], [790, 740], [0, 1040]], alpha: 0.95, bend: 26, plate: "canopy" },
-      { corners: [[905, 460], [1800, 60], [1800, 1131], [1480, 1131]], alpha: 0.95, bend: 26, plate: "canopy" },
+      { corners: [[0, 0], [720, 430], [800, 738], [0, 1120]], alpha: 1, bend: 26, plate: "canopy" },
+      { corners: [[895, 430], [1800, 0], [1800, 1131], [1520, 1131]], alpha: 1, bend: 26, plate: "canopy" },
     ];
     const surface = (corners: number[][], u: number, v: number, bend: number) => {
       const [a, b, c, d] = corners;
@@ -69,7 +94,7 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
       const qx = q[0] ?? 0, qy = q[1] ?? 0, rx = r[0] ?? 0, ry = r[1] ?? 0, tx = s[0] ?? 0, ty = s[1] ?? 0;
       ctx.save();
       // Soft surface boundaries avoid rectangular light sheets over natural textures.
-      const edge = Math.min(1, (u + du / 2) * 12, (1 - u - du / 2) * 12, (v + dv / 2) * 12, (1 - v - dv / 2) * 12);
+      const edge = Math.min(1, (u + du / 2) * 12, (1 - u - du / 2) * 12, (v + dv / 2) * 8);
       ctx.globalAlpha *= Math.max(0, edge);
       ctx.beginPath();
       if (lower) { ctx.moveTo(qx,qy); ctx.lineTo(tx,ty); ctx.lineTo(rx,ry); }
@@ -92,9 +117,9 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
       const canopyCanvas = canopyHost?.current?.querySelector("canvas");
       if (original && original.width > 0 && original.height > 0 && time - previous >= 50) {
         ctx.clearRect(0,0,target.width,target.height);
-        threshold(fieldContext, original, 45);
+        threshold(fieldContext, original, 6);
         const hasCanopy = canopyCanvas && canopyCanvas.width > 0 && canopyCanvas.height > 0;
-        if (hasCanopy) threshold(canopyContext, canopyCanvas, 48);
+        if (hasCanopy) threshold(canopyContext, canopyCanvas, 5);
         for (const patch of surfaces) {
           ctx.globalAlpha = patch.alpha;
           for (let row=0; row<12; row++) for (let column=0; column<20; column++) {
@@ -106,21 +131,28 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
           }
         }
         ctx.globalAlpha = 1;
+        if (maskReady) {
+          ctx.globalCompositeOperation = "destination-in";
+          ctx.drawImage(surfaceMask, 0, 0);
+          ctx.globalCompositeOperation = "source-over";
+        }
         // Keep the physical festival sign and foreground visitors free of projected lines.
         ctx.globalCompositeOperation = "destination-out";
         const exclusions = [
           // The physical Zauberpark sign stays free of projected light.
           [[1462,318],[1680,318],[1680,850],[1462,850]],
           // Visitors walking the path remain unprojected silhouettes.
-          [[556,610],[680,610],[680,910],[556,910]],
-          [[735,632],[802,632],[802,795],[735,795]],
-          [[824,650],[874,650],[874,768],[824,768]],
+          [[603,614],[633,614],[644,660],[671,683],[674,785],[644,796],[639,901],[580,901],[585,796],[564,765],[572,671],[596,658]],
+          [[755,635],[778,635],[793,664],[795,719],[782,730],[779,793],[750,793],[746,730],[737,719],[740,664]],
+          [[843,655],[857,655],[870,676],[870,712],[862,719],[860,767],[839,767],[836,719],[828,712],[829,676]],
         ];
+        ctx.filter = "blur(2px)"; // soft occlusion edge, like real shadows cast by the visitors
         for (const polygon of exclusions) {
           ctx.beginPath();
           polygon.forEach((point,i) => { const x = point[0] ?? 0, y = point[1] ?? 0; if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
           ctx.closePath(); ctx.fill();
         }
+        ctx.filter = "none";
         ctx.globalCompositeOperation = "source-over";
         previous = time;
       }
