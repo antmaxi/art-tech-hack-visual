@@ -16,6 +16,6 @@
 - [x] Verify build, tests and browser behaviour (timeline selection, canopy year switch, immersive, Zauberpark).
 
 # Targeted overlay and river-feature cleanup
-- [ ] Remove the specified panel captions and river markers without changing map framing or data layers.
-- [ ] Remove Canopy information boxes while retaining planting and grove removal.
-- [ ] Verify timeline, artwork, map layers and existing controls.
+- [x] Remove the specified panel captions and river markers without changing map framing or data layers.
+- [x] Remove Canopy information boxes while retaining planting and focus-scoped Delete/Backspace grove removal.
+- [x] Verify timeline, artwork, map layers and existing controls; five existing tests pass and browser checks report no runtime errors.
