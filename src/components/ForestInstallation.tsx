@@ -318,9 +318,9 @@ export function ForestInstallation() {
       const sz = Math.max(1.5, W / 600);
       for (let k = 0; k < P; k++) {
         const a = noise(px[k]! * 3 + clock, py[k]! * 3) * Math.PI * (2 + mStress * 3);
-        px[k] += Math.cos(a) * speed * (1 + breath * 0.5);
-        py[k] += Math.sin(a) * speed * (1 + breath * 0.5);
-        pl[k] -= 0.004 + mStress * 0.01;
+        px[k] = px[k]! + Math.cos(a) * speed * (1 + breath * 0.5);
+        py[k] = py[k]! + Math.sin(a) * speed * (1 + breath * 0.5);
+        pl[k] = pl[k]! - (0.004 + mStress * 0.01);
         if (pl[k]! <= 0 || px[k]! < 0 || px[k]! > 1 || py[k]! < 0 || py[k]! > 1) {
           px[k] = Math.random();
           py[k] = Math.random();
