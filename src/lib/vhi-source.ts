@@ -20,18 +20,21 @@ function hash(n: number) {
 
 /**
  * VHI for a region, as health 0..1 (VHI / 100).
- * HYPOTHETICAL for now: a stable per-region mean plus a smooth spatial field.
- * Later: replace with predownloaded real per-region rasters, same return shape.
+ * When an observed August VHI (0..100) is passed, it becomes the field's mean
+ * and the result is no longer hypothetical. Without one, the field falls back
+ * to a stable per-region mean plus a smooth spatial field — clearly labelled
+ * hypothetical. Missing years are never interpolated.
  */
-export function getRegionVhi(id: number) {
-  const mean = 0.25 + hash(id) * 0.6;
+export function getRegionVhi(id: number, vhi?: number | null) {
+  const observed = vhi != null;
+  const mean = observed ? vhi / 100 : 0.25 + hash(id) * 0.6;
   const a = hash(id * 7 + 1) * 6.28;
   const b = hash(id * 13 + 2) * 6.28;
   const field = (u: number, v: number) => {
     const w = Math.sin(u * 9 + a) * Math.cos(v * 7 + b) * 0.18 + Math.sin((u + v) * 23 + b) * 0.07;
     return Math.min(1, Math.max(0, mean + w));
   };
-  return { hypothetical: true, mean, field };
+  return { hypothetical: !observed, mean, field };
 }
 
 /** Pixel frame for a region: padded bbox and canvas size with the bbox's aspect. */
