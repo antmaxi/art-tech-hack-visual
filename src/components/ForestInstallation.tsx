@@ -529,9 +529,12 @@ export function ForestInstallation() {
           >
             Legend
           </Button>
+          <AboutDialog container={wallRef} />
           <a className="forest-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
             Source: swissEO VHI
           </a>
+        </div>
+        <div className="forest-cta">
           {immersive ? (
             <Button variant="ghost" type="button" onClick={exitImmersive}>
               Exit · Esc
@@ -546,29 +549,30 @@ export function ForestInstallation() {
             open={zauberpark}
             onOpenChange={setZauberpark}
           />
-          <AboutDialog container={wallRef} />
         </div>
       </footer>
 
       {legend && !immersive && (
         <aside className="forest-legend">
           <p>
-            <b>VHI</b> Vegetation Health Index · annual regional means on the map and Canopy; equal-weight mean of all
-            38 regions in the breathing field and timeline.
+            <b>VHI</b> The Vegetation Health Index is a satellite indicator of plant stress on a 0–100 scale. Values
+            below ~40 signal stress such as drought; values above ~60 signal healthy, vigorous vegetation.
           </p>
           <p>
-            <b>VCI</b> Vegetation Condition Index · movement & flow — <em>not connected yet; movement follows VHI</em>
+            <b>How it is built</b> VHI = 0.5 · VCI + 0.5 · TCI. The Vegetation Condition Index (VCI) compares current
+            greenness (NDVI, from red and near-infrared reflectance) with its historical min–max for the same place and
+            season. The Temperature Condition Index (TCI) does the same for land-surface temperature, inverted so hotter
+            means lower. Together they capture both how green and how heat-stressed the vegetation is.
           </p>
           <p>
-            <b>TCI</b> Temperature Condition Index · sound rhythm — <em>not connected yet</em>
+            <b>In this work</b> Monthly swisstopo / swissEO observations for 38 Swiss forest regions, 1991–2026,
+            averaged per calendar year. The map and Canopy show regional means (or the national mean for All of
+            Switzerland); the breathing field and timeline use the equal-weight national mean.
           </p>
           <p className="forest-legend-note">
-            Supplied swisstopo monthly observations, averaged over calendar months. Internal missing months are linearly
-            interpolated within each region; no extrapolation. Ten regions lack January 1991 and use eleven available
-            months. National means weight regions equally, not by forest area. Playback covers 1991–2026 at three seconds
-            per year (108 s); 2026 is preliminary (January–October only). The breathing is an
-            artistic interpretation — the data does not measure respiration. The soundtrack is a composed 108-second
-            piece, synced one-to-one with the years.
+            Internal missing months are linearly interpolated within each region; no extrapolation. 2026 is preliminary
+            (January–October). Playback runs three seconds per year (108 s), synced to the composed soundtrack. The
+            breathing is an artistic interpretation — VHI does not measure respiration.
           </p>
         </aside>
       )}
