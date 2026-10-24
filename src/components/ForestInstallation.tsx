@@ -530,9 +530,6 @@ export function ForestInstallation() {
             Legend
           </Button>
           <AboutDialog container={wallRef} />
-          <a className="forest-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
-            Source: swissEO VHI
-          </a>
         </div>
         <div className="forest-cta">
           {immersive ? (
@@ -550,29 +547,31 @@ export function ForestInstallation() {
             onOpenChange={setZauberpark}
           />
         </div>
+        <a className="forest-source forest-data-source forest-only-panels" href={SOURCE.url} target="_blank" rel="noreferrer">
+          Data source
+        </a>
       </footer>
 
       {legend && !immersive && (
         <aside className="forest-legend">
           <p>
-            <b>VHI</b> The Vegetation Health Index is a satellite indicator of plant stress on a 0–100 scale. Values
-            below ~40 signal stress such as drought; values above ~60 signal healthy, vigorous vegetation.
+            <b>VHI</b> The Vegetation Health Index is swisstopo's satellite measure of vegetation health on a 0–100
+            scale. Every value compares the present with the same place and season during the 1991–2020 climate
+            reference period, so it reads as anomaly rather than absolute greenness. swisstopo classifies it as:
+            60–100 excellent, 50–60 good, 40–50 normal; below 40 vegetation shows signs of stress — slightly stressed
+            to 30, stressed to 20, severely stressed to 10, extremely stressed below 10.
           </p>
           <p>
-            <b>How it is built</b> VHI = 0.5 · VCI + 0.5 · TCI. The Vegetation Condition Index (VCI) compares current
+            <b>How it is built</b> VHI combines two components. The Vegetation Condition Index (VCI) compares current
             greenness (NDVI, from red and near-infrared reflectance) with its historical min–max for the same place and
             season. The Temperature Condition Index (TCI) does the same for land-surface temperature, inverted so hotter
-            means lower. Together they capture both how green and how heat-stressed the vegetation is.
+            means lower. The standard formulation weights the two equally (VHI = 0.5 · VCI + 0.5 · TCI); swisstopo
+            derives both on a 10 × 10 m grid from Sentinel-2, Landsat and Meteosat observations.
           </p>
           <p>
             <b>In this work</b> Monthly swisstopo / swissEO observations for 38 Swiss forest regions, 1991–2026,
             averaged per calendar year. The map and Canopy show regional means (or the national mean for All of
             Switzerland); the breathing field and timeline use the equal-weight national mean.
-          </p>
-          <p className="forest-legend-note">
-            Internal missing months are linearly interpolated within each region; no extrapolation. 2026 is preliminary
-            (January–October). Playback runs three seconds per year (108 s), synced to the composed soundtrack. The
-            breathing is an artistic interpretation — VHI does not measure respiration.
           </p>
         </aside>
       )}
