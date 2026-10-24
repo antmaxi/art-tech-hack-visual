@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { wmsUrlFor } from "@/lib/map-geo";
 import { getRegion, regionFrame, regionLabel } from "@/lib/vhi-source";
 import { canopyHealthSource } from "@/lib/canopy-scope";
+import { breathRate, vhiColor } from "@/lib/forest-art";
+import { normalizeVhi } from "@/lib/annual-vhi";
 
 function cssVar(n: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -197,6 +199,8 @@ export function ForestCanvas({
       // where anything actually grows, and how healthy the satellite finds it
       const cells: number[] = [];
       const health = new Float32Array(W * H).fill(0.5);
+      // expressive health: calibrated against the observed record (worst year → 0, best → 1)
+      const healthN = new Float32Array(W * H).fill(normalizeVhi(50));
       for (let i = 0; i < W * H; i++) {
         if (mask[i * 4 + 3]! < 128 || lc[i * 4 + 3]! < 40) continue;
         const r = lc[i * 4]!;
@@ -206,12 +210,11 @@ export function ForestCanvas({
         cells.push(i);
         const h = vhiSrc.field((i % W) / W, ((i / W) | 0) / H);
         health[i] = h;
+        healthN[i] = normalizeVhi(h * 100);
       }
       if (!cells.length) return;
 
       const deepC = cssVar("--forest-deep");
-      const midC = cssVar("--forest-mid");
-      const dryC = cssVar("--accent");
       const wakeC = cssVar("--river-warm");
       const mineC = cssVar("--hydro");
       const ink = cssVar("--drain");
@@ -219,9 +222,14 @@ export function ForestCanvas({
       // six crowns per tone, so no two trees share a silhouette
       const set = (color: string, seed: number) =>
         Array.from({ length: 6 }, (_, k) => foliage(color, seed + k * 977));
-      const deepS = set(deepC, 11);
-      const midS = set(midC, 7000);
-      const dryS = set(dryC, 15000);
+      // continuous palette: scorched rust at health 0 grading to deep emerald at health 1
+      const TONES = 9;
+      const toneCss = Array.from(
+        { length: TONES },
+        (_, l) => `rgb(${vhiColor((l / (TONES - 1)) * 100).join(",")})`,
+      );
+      const toneSets = toneCss.map((color, l) => set(color, 4000 + l * 7919));
+      const toneOf = (h: number) => Math.round(Math.min(1, Math.max(0, h)) * (TONES - 1));
       const wakeS = set(wakeC, 23000);
       const mineS = set(mineC, 31000);
 
@@ -243,7 +251,7 @@ export function ForestCanvas({
       const tree = (i: number, planted = false, px?: number, py?: number): Tree => {
         const x = px ?? i % W;
         const y = py ?? (i / W) | 0;
-        const h = health[((y | 0) * W + (x | 0)) | 0] ?? 0.5;
+        const h = healthN[((y | 0) * W + (x | 0)) | 0] ?? 0.5;
         return {
           hx: x,
           hy: y,
@@ -351,19 +359,21 @@ export function ForestCanvas({
           healthVhi = s.vhi;
           healthScope = s.dataScope;
           const source = canopyHealthSource(region.id, s.vhi, s.dataScope);
-          for (const i of cells) health[i] = source.field((i % W) / W, ((i / W) | 0) / H);
-          for (const tr of trees) tr.health = health[((tr.hy | 0) * W + (tr.hx | 0)) | 0] ?? 0.5;
+          for (const i of cells) {
+            health[i] = source.field((i % W) / W, ((i / W) | 0) / H);
+            healthN[i] = normalizeVhi(health[i]! * 100);
+          }
+          for (const tr of trees) tr.health = healthN[((tr.hy | 0) * W + (tr.hx | 0)) | 0] ?? 0.5;
         }
-        const heat = Math.min(1, Math.max(0, (s.airTemp - 5) / 22));
         const rainDeep = Math.min(0.35, s.rain * 0.18);
         const gust = !!pointer && pointer.down && pointer.moved;
 
         // small leaves first, so crowns sit on top of them
         for (const sp of specks) {
-          const h = health[((sp.y | 0) * W + (sp.x | 0)) | 0] ?? 0.5;
-          const b = (Math.sin(t * ((Math.PI * 2) / (9 - h * 3 - heat * 2.5)) + sp.phase) + 1) / 2;
+          const h = healthN[((sp.y | 0) * W + (sp.x | 0)) | 0] ?? 0.5;
+          const b = (Math.sin(t * breathRate(h) * 60 + sp.phase) + 1) / 2;
           ctx.globalAlpha = 0.06 + b * 0.18;
-          ctx.fillStyle = b > 0.6 ? midC : deepC;
+          ctx.fillStyle = toneCss[toneOf(h)]!;
           const k = 1 + b * 1.8;
           ctx.fillRect(sp.x, sp.y, k, k);
         }
@@ -371,10 +381,11 @@ export function ForestCanvas({
         for (const tr of trees) {
           if (tr.growth < 1) tr.growth = Math.min(1, tr.growth + 0.008);
 
-          // a healthy tree breathes deep and slow; a thirsty one pants shallow and fast
-          const rate = (Math.PI * 2) / (9 - tr.health * 3 - heat * 2.5);
+          // a healthy tree breathes deep and slow; a thirsty one pants shallow and fast —
+          // the same shared tempo as the breathing field, so they move as one in immersion
+          const rate = breathRate(tr.health) * 60;
           const b = (Math.sin(t * rate + tr.phase) + 1) / 2;
-          const depth = 0.35 + tr.health * 0.5 + rainDeep;
+          const depth = 0.18 + tr.health * 0.55 + rainDeep;
 
           // wind off the river, and the spring back to where it grew
           tr.x += (tr.hx - tr.x) * 0.05 + Math.sin(t * 0.35 + tr.hy * 0.008) * (0.2 + s.flow * 0.012);
@@ -391,15 +402,12 @@ export function ForestCanvas({
             }
           }
 
-          let r = tr.base * (0.5 + b * depth) * tr.growth;
-          let a = (0.11 + b * 0.3) * (tr.planted ? 0.85 : 1);
+          // crown surface follows health: lush and wide at peak, shrunken in drought
+          let r = tr.base * (0.55 + tr.health * 0.85) * (0.5 + b * depth) * tr.growth;
+          let a = (0.09 + b * 0.3) * (tr.planted ? 0.85 : 0.6 + tr.health * 0.4);
           let sheet2 = tr.planted
             ? mineS[tr.variant]!
-            : tr.health < 0.4
-              ? dryS[tr.variant]!
-              : tr.tone < 0.55
-                ? deepS[tr.variant]!
-                : midS[tr.variant]!;
+            : toneSets[toneOf(tr.health)]![tr.variant]!;
 
           if (pointer && !pointer.down) {
             const dd = Math.hypot(tr.x - pointer.x, tr.y - pointer.y);
