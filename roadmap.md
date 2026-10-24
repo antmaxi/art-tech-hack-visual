@@ -36,3 +36,8 @@
 - [x] Frame all Switzerland, select any supplied region on the map, and synchronise the unchanged Canopy.
 - [x] Use national annual means for the breathing field and timeline; play 1991–2025 at five seconds per year.
 - [x] Verify data rules, map selection, timeline, Canopy, and preserved controls.
+
+# Authentic Zauberpark photograph mockup
+- [x] Replace the mockup background plate with the supplied authentic Zauberpark forest photograph.
+- [x] Re-fit projection surfaces (trunks, upper canopy, floor/path) and sign/visitor exclusions to the new composition.
+- [ ] Verify the mockup in the browser and confirm the immersive website is unchanged.
