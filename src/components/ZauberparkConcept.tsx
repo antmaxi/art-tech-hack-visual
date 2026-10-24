@@ -17,7 +17,7 @@ type Props = {
   year: number;
 };
 
-function Projection({ source, animated }: Pick<Props, "source"> & { animated: boolean }) {
+function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "canopyHost"> & { animated: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const target = canvas.current;
@@ -25,11 +25,25 @@ function Projection({ source, animated }: Pick<Props, "source"> & { animated: bo
     if (!target || !ctx) return;
     target.width = 1800;
     target.height = 1200;
-    const light = document.createElement("canvas");
-    light.width = 720;
-    light.height = 480;
-    const lightContext = light.getContext("2d", { willReadFrequently: true });
-    if (!lightContext) return;
+    // Two thresholded light plates: the Canopy (upper band) and the breathing field (lower band).
+    const fieldLight = document.createElement("canvas");
+    fieldLight.width = 720;
+    fieldLight.height = 480;
+    const fieldContext = fieldLight.getContext("2d", { willReadFrequently: true });
+    const canopyLight = document.createElement("canvas");
+    canopyLight.width = 720;
+    canopyLight.height = 480;
+    const canopyContext = canopyLight.getContext("2d", { willReadFrequently: true });
+    if (!fieldContext || !canopyContext) return;
+    const threshold = (plate: CanvasRenderingContext2D, original: HTMLCanvasElement, floor: number) => {
+      plate.drawImage(original, 0, 0, plate.canvas.width, plate.canvas.height);
+      const pixels = plate.getImageData(0, 0, plate.canvas.width, plate.canvas.height);
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const luminance = (pixels.data[i] ?? 0) * 0.2126 + (pixels.data[i+1] ?? 0) * 0.7152 + (pixels.data[i+2] ?? 0) * 0.0722;
+        pixels.data[i+3] = Math.max(0, Math.min(255, (luminance - floor) * 3.5));
+      }
+      plate.putImageData(pixels, 0, 0);
+    };
     // Geometry belongs only to this reference mockup, never to the shared artwork.
     type Surface = { corners: number[][]; alpha: number; bend: number };
     const surfaces: Surface[] = [
