@@ -1,6 +1,6 @@
 # Main-interface forest mockup
-- [ ] Refine only the concept environment using the supplied annotated reference; retain live/still projection and add the physical festival sign.
-- [ ] Verify concept controls and unchanged Immersion Mode.
+- [x] Refine only the concept environment using the supplied annotated reference; retain live/still projection and add the physical festival sign.
+- [x] Verify concept controls and unchanged Immersion Mode.
 
 # Immersive national Canopy
 - [x] Decouple immersive health-field data from region identity and prevent stale health during terrain loading.
