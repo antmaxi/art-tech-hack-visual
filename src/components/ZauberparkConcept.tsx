@@ -63,10 +63,10 @@ function Projection({ source, canopyHost, animated }: Pick<Props, "source" | "ca
         (a[1] ?? 0) * (1-u)*(1-v) + (b[1] ?? 0)*u*(1-v) + (c[1] ?? 0)*u*v + (d[1] ?? 0)*(1-u)*v + Math.sin(u * Math.PI) * Math.sin(v * Math.PI * 2) * bend,
       ];
     };
-    const tile = (original: HTMLCanvasElement, patch: Surface, u: number, v: number, du: number, dv: number, lower: boolean) => {
+    const tile = (original: HTMLCanvasElement, patch: Surface, u: number, v: number, du: number, dv: number, lower: boolean, v0: number, vScale: number) => {
       const p = surface(patch.corners,u,v,patch.bend), q = surface(patch.corners,u+du,v,patch.bend), r = surface(patch.corners,u,v+dv,patch.bend), s = surface(patch.corners,u+du,v+dv,patch.bend);
-      const sx = u*original.width, sy = v*original.height;
-      const sw = du*original.width, sh = dv*original.height;
+      const sx = u*original.width, sy = (v0 + v*vScale)*original.height;
+      const sw = du*original.width, sh = dv*vScale*original.height;
       const x = p[0] ?? 0, y = p[1] ?? 0;
       const qx = q[0] ?? 0, qy = q[1] ?? 0, rx = r[0] ?? 0, ry = r[1] ?? 0, tx = s[0] ?? 0, ty = s[1] ?? 0;
       ctx.save();
