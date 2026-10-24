@@ -11,3 +11,4 @@
 
 - Keep the Zauberpark concept in a scoped modal that mirrors the existing field canvas rather than remounting the installation, so the timeline, evolving animation and shared audio survive opening and closing it.
 - Mount the concept portal inside the Forest wall and let its dialog own keyboard dismissal while open, so it also works within document fullscreen without exiting the underlying immersive mode.
+- Keep authentic concept photographs as CDN asset pointers and map the shared artwork canvas into photograph-space terrain geometry; this preserves venue landmarks and the exact evolving artwork without generating substitute scenery.
