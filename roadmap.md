@@ -41,3 +41,8 @@
 - [x] Replace the mockup background plate with the supplied authentic Zauberpark forest photograph.
 - [x] Re-fit projection surfaces (trunks, upper canopy, floor/path) and sign/visitor exclusions to the new composition.
 - [x] Verify the mockup in the browser and confirm the immersive website is unchanged.
+
+# Custom soundtrack + low-VHI contrast
+- [x] Replace the synthesised drone with the supplied 108 s track, synced one-to-one with the timeline (3 s per year).
+- [x] Low VHI: vibrant thin rust contour lines over near-black with only a slight residual gradient.
+- [x] Verify tests, audio loading, and drought-vs-peak contrast in the browser.
