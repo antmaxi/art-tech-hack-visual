@@ -63,8 +63,8 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --background: oklch(0.13 0.008 150);
+  --foreground: oklch(0.94 0.02 150);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
@@ -142,3 +142,79 @@
     color: var(--color-foreground);
   }
 }
+
+/* ---------- Forest installation ---------- */
+:root {
+  --forest-wall: oklch(0.1 0.006 150);
+  --forest-sheet: oklch(0.06 0.006 150);
+  --forest-ink: oklch(0.94 0.03 155);
+  --forest-dim: oklch(0.7 0.03 155);
+  --forest-emerald: oklch(0.82 0.16 155);
+  --forest-earth: oklch(0.6 0.11 55);
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --ease-breath: cubic-bezier(0.65, 0, 0.35, 1);
+}
+html, body { height: 100%; }
+body { background: var(--forest-wall); }
+
+.forest-wall { position: fixed; inset: 0; background: var(--forest-wall); color: var(--forest-ink); font-family: var(--font-mono); overflow: hidden; }
+.forest-panels { position: absolute; inset: 20px 20px 56px; display: flex; gap: 14px; transition: inset 1.4s var(--ease-breath), gap 1.4s var(--ease-breath); }
+.forest-sheet { position: relative; flex: 1 1 0; min-width: 0; background: var(--forest-sheet); overflow: hidden; outline: 1px solid color-mix(in oklab, var(--forest-ink) 8%, transparent);
+  transition: flex-grow 1.4s var(--ease-breath), opacity 0.9s ease, outline-color 1s; }
+.forest-map, .forest-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.forest-map { background: var(--forest-sheet); }
+.forest-clickable { cursor: pointer; }
+.forest-basemap { filter: grayscale(0.85) brightness(0.55) contrast(1.15); }
+.forest-contours { mix-blend-mode: screen; filter: invert(1) grayscale(1); }
+
+.forest-spine, .forest-cap, .forest-brand, .forest-imm-year { position: absolute; z-index: 500; pointer-events: none; text-transform: uppercase; letter-spacing: 0.18em; text-shadow: 0 1px 3px oklch(0 0 0 / 0.8); transition: opacity 0.8s ease; }
+.forest-spine { top: 18px; left: 12px; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; color: var(--forest-dim); }
+.forest-cap { left: 16px; right: 16px; bottom: 14px; font-size: 10px; line-height: 1.6; color: var(--forest-dim); }
+.forest-cap b { display: block; font-family: var(--font-display); font-weight: 400; text-transform: none; letter-spacing: 0.02em; font-size: 22px; color: var(--forest-ink); }
+.forest-sub { display: block; opacity: 0.7; }
+.forest-key { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.forest-key i { display: inline-block; width: 14px; height: 7px; margin-left: 6px; }
+.forest-key i:first-child { margin-left: 0; }
+.k-data { background: linear-gradient(90deg, var(--forest-earth), var(--forest-emerald)); }
+.k-miss { background: repeating-linear-gradient(135deg, oklch(0.8 0.01 150 / 0.4) 0 1px, transparent 1px 4px); outline: 1px solid oklch(0.8 0.01 150 / 0.2); }
+.k-next { outline: 1px dashed var(--forest-emerald); }
+.forest-brand { top: 16px; right: 16px; text-align: right; font-size: 10px; line-height: 1.6; color: var(--forest-ink); }
+.forest-imm-year { left: 50%; bottom: 9vh; transform: translateX(-50%); text-align: center; opacity: 0; }
+.forest-imm-year span { display: block; font-family: var(--font-display); font-size: clamp(48px, 9vw, 140px); letter-spacing: 0.04em; line-height: 1; color: var(--forest-ink); }
+.forest-imm-year small { font-size: 11px; color: var(--forest-dim); }
+
+.forest-bar { position: absolute; left: 20px; right: 20px; bottom: 0; height: 56px; display: flex; align-items: center; gap: 22px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--forest-dim); transition: opacity 0.8s ease, background 1s; z-index: 1000; }
+.forest-bar button, .forest-source { font: inherit; letter-spacing: inherit; text-transform: inherit; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; text-decoration: none; transition: color 0.3s; white-space: nowrap; }
+.forest-bar button:hover, .forest-source:hover, .forest-bar button[aria-pressed="true"] { color: var(--forest-ink); }
+.forest-enter { color: var(--forest-emerald) !important; border: 1px solid color-mix(in oklab, var(--forest-emerald) 45%, transparent) !important; padding: 7px 12px !important; }
+.forest-enter:hover { background: color-mix(in oklab, var(--forest-emerald) 12%, transparent) !important; }
+.forest-year { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.04em; color: var(--forest-ink); min-width: 3ch; }
+.forest-range { flex: 1; min-width: 80px; appearance: none; height: 1px; background: color-mix(in oklab, var(--forest-ink) 30%, transparent); cursor: pointer; }
+.forest-range::-webkit-slider-thumb { appearance: none; width: 9px; height: 9px; border-radius: 50%; background: var(--forest-emerald); box-shadow: 0 0 10px var(--forest-emerald); }
+.forest-range::-moz-range-thumb { width: 9px; height: 9px; border: 0; border-radius: 50%; background: var(--forest-emerald); }
+
+.forest-legend { position: absolute; right: 20px; bottom: 64px; width: min(420px, calc(100% - 40px)); z-index: 1100; background: color-mix(in oklab, var(--forest-sheet) 92%, transparent); backdrop-filter: blur(8px); border: 1px solid color-mix(in oklab, var(--forest-ink) 14%, transparent); padding: 16px 18px; font-size: 11px; line-height: 1.6; color: var(--forest-dim); }
+.forest-legend p { margin: 0 0 8px; }
+.forest-legend b { color: var(--forest-ink); font-weight: 500; margin-right: 6px; }
+.forest-legend em { color: var(--forest-earth); font-style: normal; }
+.forest-legend-note { font-size: 10px; opacity: 0.85; margin-top: 12px !important; }
+
+/* immersive */
+.is-immersive { background: oklch(0 0 0); }
+.is-immersive .forest-panels { inset: 0; gap: 0; }
+.is-immersive .forest-sheet-side { flex-grow: 0.0001; opacity: 0; pointer-events: none; }
+.is-immersive .forest-sheet-field { outline-color: transparent; }
+.is-immersive .forest-cap, .is-immersive .forest-spine, .is-immersive .forest-only-panels { opacity: 0; display: none; }
+.is-immersive .forest-imm-year { opacity: 0.85; }
+.is-immersive .forest-bar { left: 50%; right: auto; transform: translateX(-50%); bottom: 24px; height: 44px; width: min(720px, calc(100% - 48px)); padding: 0 20px; background: oklch(0 0 0 / 0.45); backdrop-filter: blur(6px); }
+.is-immersive.is-idle .forest-bar, .is-immersive.is-idle .forest-brand, .is-immersive.is-idle .forest-imm-year small { opacity: 0; }
+.is-immersive.is-idle { cursor: none; }
+
+.leaflet-popup-content { font-family: var(--font-mono); font-size: 12px; line-height: 1.4; }
+
+@media (max-width: 820px) {
+  .forest-panels { flex-direction: column; inset: 12px 12px 92px; gap: 10px; }
+  .forest-bar { flex-wrap: wrap; height: auto; bottom: 8px; gap: 10px 16px; left: 12px; right: 12px; }
+}
+.forest-timeline { height: calc(100% - 92px); }
