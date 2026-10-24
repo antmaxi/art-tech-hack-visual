@@ -1,7 +1,6 @@
-# Zauberpark extension
 # Immersive national Canopy
-- [ ] Layer the existing Canopy with the breathing artwork only in Immersion Mode, using national annual VHI.
-- [ ] Verify national scope, unchanged timeline, and restoration of the original regional interface.
+- [x] Layer the existing Canopy with the breathing artwork only in Immersion Mode, using national annual VHI.
+- [x] Verify national scope, unchanged timeline, and restoration of the original regional interface.
 
 # Zauberpark extension
 - [x] Add discreet entry and full-screen concept view without replacing the existing artwork.
