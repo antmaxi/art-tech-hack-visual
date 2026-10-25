@@ -12,6 +12,7 @@ import { ALL_SWITZERLAND, canopyAnnualVhi, DEFAULT_SELECTION, isNationalScope } 
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { regionLabel } from "@/lib/vhi-source";
 import { createMapFraming } from "@/lib/map-framing";
+import { indexForAudioTime } from "@/lib/audio-timeline";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
@@ -44,6 +45,12 @@ export function ForestInstallation() {
   const mapApi = useRef<{ show: (y: YearRecord, selected: number) => void } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const barRef = useRef<HTMLElement | null>(null);
+
+  const selectYear = useCallback((selected: number) => {
+    setIndex(selected);
+    // Only deliberate timeline/keyboard navigation seeks the soundtrack.
+    if (audio.current) audio.current.currentTime = audioTimeForIndex(selected);
+  }, []);
 
   // Keep the plots clear of the control bar: publish the bar's live height as a CSS variable.
   useEffect(() => {
@@ -150,10 +157,10 @@ export function ForestInstallation() {
 
   // ---------- playback ----------
   useEffect(() => {
-    if (!playing) return;
+    if (!playing || sound) return;
     const t = setTimeout(() => setIndex((i) => (i + 1) % years.length), YEAR_DURATION_MS);
     return () => clearTimeout(t);
-  }, [playing, index, years.length, year.vhi]);
+  }, [playing, sound, index, years.length, year.vhi]);
 
   // ---------- animation: bottom timeline + PANEL 3 ----------
   useEffect(() => {
@@ -406,11 +413,16 @@ export function ForestInstallation() {
     }
     const track = audio.current;
     track.currentTime = audioTimeForIndex(live.current.index);
-    if (live.current.playing) track.play().catch(() => {});
+    const syncYear = () => {
+      if (!live.current.playing) return;
+      setIndex(indexForAudioTime(track.currentTime, live.current.years.length));
+    };
+    track.addEventListener("timeupdate", syncYear);
+    return () => track.removeEventListener("timeupdate", syncYear);
   }, [sound]);
 
-  // keep the track locked to the selected year: pause with the timeline,
-  // resume on play, and re-seek whenever the year jumps or drift builds up
+  // The recording is the playback clock. Pause/resume without resetting its
+  // position; automatic year updates must never seek or restart the audio.
   useEffect(() => {
     const track = audio.current;
     if (!track || !sound) return;
@@ -418,10 +430,8 @@ export function ForestInstallation() {
       track.pause();
       return;
     }
-    const target = audioTimeForIndex(index);
-    if (Math.abs(track.currentTime - target) > 0.4) track.currentTime = target;
     track.play().catch(() => {});
-  }, [index, playing, sound]);
+  }, [playing, sound]);
 
   useEffect(() => {
     return () => {
@@ -450,8 +460,8 @@ export function ForestInstallation() {
         setPlaying((p) => !p);
       }
       if ((e.target as HTMLElement)?.closest('select, input, [role="button"]')) return;
-      if (e.key === "ArrowRight") setIndex((i) => Math.min(live.current.years.length - 1, i + 1));
-      if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
+      if (e.key === "ArrowRight") selectYear(Math.min(live.current.years.length - 1, live.current.index + 1));
+      if (e.key === "ArrowLeft") selectYear(Math.max(0, live.current.index - 1));
     };
     const onFs = () => {
       if (!document.fullscreenElement && live.current.immersive) setImmersive(false);
@@ -486,7 +496,7 @@ export function ForestInstallation() {
 
   const pickYear = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    setIndex(clamp(Math.floor(((e.clientX - r.left) / r.width) * years.length), 0, years.length - 1));
+    selectYear(clamp(Math.floor(((e.clientX - r.left) / r.width) * years.length), 0, years.length - 1));
   };
 
   const first = years[0]!.year;
