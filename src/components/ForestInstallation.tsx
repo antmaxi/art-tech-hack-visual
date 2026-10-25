@@ -7,10 +7,10 @@ import { AboutDialog } from "@/components/AboutDialog";
 import arthack from "@/assets/arthack.mp3.asset.json";
 import { ForestCanvas } from "@/components/ForestCanvas";
 import { Button } from "@/components/ui/button";
-import { AVAILABLE_REGION_IDS, audioTimeForIndex, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
+import { audioTimeForIndex, getAnnualRegion, normalizeVhi, PRELIMINARY_YEARS, YEAR_DURATION_MS } from "@/lib/annual-vhi";
 import { ALL_SWITZERLAND, canopyAnnualVhi, DEFAULT_SELECTION, isNationalScope } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
-import { regionLabel } from "@/lib/vhi-source";
+import { REGION_IDS_BY_NAME, regionLabel } from "@/lib/vhi-source";
 import { createMapFraming } from "@/lib/map-framing";
 import { indexForAudioTime } from "@/lib/audio-timeline";
 import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, type FieldResolution } from "@/lib/field-resolution";
@@ -565,7 +565,7 @@ export function ForestInstallation() {
             onChange={(event) => setRegionId(Number(event.target.value))}
           >
             <option value={ALL_SWITZERLAND}>All of Switzerland</option>
-            {AVAILABLE_REGION_IDS.map((id) => (
+            {REGION_IDS_BY_NAME.map((id) => (
               <option key={id} value={id}>
                 {regionLabel(id)}
               </option>

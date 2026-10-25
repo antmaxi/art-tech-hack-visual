@@ -22,3 +22,4 @@
 - Preserve the supplied monthly CSV as source of truth; annual-vhi owns parsing, bounded same-region month interpolation, coverage counts and equal-weight national aggregation so map, Canopy and timeline cannot diverge.
 - Convert existing Swiss-grid region rings with proj4 in forest-regions; map polygons encode annual regional means rather than misrepresenting a single dated raster as annual data, and preserve the aerial and contour basemaps.
 - Keep immersive topographic quality in field-resolution with bounded offscreen sample budgets; switching quality resizes buffers without remounting animation, Canopy or audio, and leaves normal-panel resolution unchanged.
+- Region menus list names alphabetically via `REGION_IDS_BY_NAME` (German collation, so umlaut names stay in place); keep "All of Switzerland" pinned first and never order a user-facing region list by id.
