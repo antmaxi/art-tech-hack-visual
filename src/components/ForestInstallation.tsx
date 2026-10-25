@@ -290,7 +290,9 @@ export function ForestInstallation() {
       });
     };
 
-    const drawField = () => {
+    // timeScale converts per-frame increments to real time so contour speed is
+    // identical in high and low resolution (high costs more compute per frame)
+    const drawField = (timeScale: number) => {
       if (!buffer) return;
       const { years: ys, index: idx, mean: m } = live.current;
       const y = ys[idx]!;
@@ -309,10 +311,10 @@ export function ForestInstallation() {
       const blacken = live.current.immersive ? clamp((stress - 0.25) * 1.6, 0, 1) : 0;
 
       // breathing: very slow and deep at peak health (~23s), fast and shallow in drought (~2s)
-      phase += breathRate(motionHealth) * (1 + mStress * 0.9 * noise(clock * 2, 3.3));
+      phase += breathRate(motionHealth) * (1 + mStress * 0.9 * noise(clock * 2, 3.3)) * timeScale;
       const hold = clamp((mStress - 0.3) * 2.5, 0, 1) * clamp(noise(clock * 3, 9.1) * 3 * mStress, 0, 1); // interruptions
       const breath = Math.sin(phase) * (1 - hold) * (0.55 + health * 0.45 - mStress * 0.3);
-      clock += 0.0012 + mStress * 0.006;
+      clock += (0.0012 + mStress * 0.006) * timeScale;
 
       const w = low.width;
       const h = low.height;
@@ -368,9 +370,9 @@ export function ForestInstallation() {
       const sz = Math.max(1.5, W / 600);
       for (let k = 0; k < P; k++) {
         const a = noise(px[k]! * 3 + clock, py[k]! * 3) * Math.PI * (2 + mStress * 3);
-        px[k] = px[k]! + Math.cos(a) * speed * (1 + breath * 0.5);
-        py[k] = py[k]! + Math.sin(a) * speed * (1 + breath * 0.5);
-        pl[k] = pl[k]! - (0.004 + mStress * 0.01);
+        px[k] = px[k]! + Math.cos(a) * speed * (1 + breath * 0.5) * timeScale;
+        py[k] = py[k]! + Math.sin(a) * speed * (1 + breath * 0.5) * timeScale;
+        pl[k] = pl[k]! - (0.004 + mStress * 0.01) * timeScale;
         if (pl[k]! <= 0 || px[k]! < 0 || px[k]! > 1 || py[k]! < 0 || py[k]! > 1) {
           px[k] = Math.random();
           py[k] = Math.random();
@@ -394,9 +396,12 @@ export function ForestInstallation() {
       fctx.fillRect(0, 0, W, H);
     };
 
+    let lastFrame = 0;
     const loop = (t: number) => {
+      const timeScale = frameTimeScale(lastFrame ? t - lastFrame : FRAME_INTERVAL_MS);
+      lastFrame = t;
       drawTimeline(t);
-      drawField();
+      drawField(timeScale);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
