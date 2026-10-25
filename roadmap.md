@@ -59,3 +59,7 @@
 # GitHub presence
 - [x] Add a clickable GitHub logo link to the repository at the end of the About text.
 - [ ] Connect the project to https://github.com/antmaxi/art-tech-hack-visual — blocker: Git sync can only create a new private repository, it cannot link one that already exists; needs the user's choice in Project settings → Git.
+
+# README rewrite
+- [x] Replace the placeholder title with the project name; describe the three panels, Immersion Mode and the soundtrack.
+- [x] Document the FOEN/swisstopo VHI pipeline with figures verified against the supplied CSV; list the team as in the About section.
