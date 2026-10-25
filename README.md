@@ -28,7 +28,7 @@ The raw feed is monthly, so the project builds the series the artwork plays on:
 
 - 16,340 monthly observations across **38 regions**, January 1991 to October 2026.
 - Each region's **annual value is the mean of all its available months** — a full-calendar-year picture rather than a single dated snapshot.
-- 1,034 gaps in the record are filled by **linear interpolation between the neighbouring months of the same region**; nothing is extrapolated beyond the observed range.
+- 1,034 months arrive empty; 1,024 of them are filled by **linear interpolation between the neighbouring months of the same region** (the remainder sit at the start or end of a region's series and are left as gaps). Nothing is extrapolated beyond the observed range.
 - The **national view is the equal-weight mean across all regions** present in a given year, so one well-sampled region cannot dominate the country's pulse.
 - Visuals are calibrated to the record itself: the worst year in the dataset reads as maximum drought, the best as peak vitality.
 - 2026 is **preliminary** (January–October).
