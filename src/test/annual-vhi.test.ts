@@ -12,7 +12,7 @@ import {
 } from "@/lib/annual-vhi";
 import { ANNUAL_YEARS } from "@/lib/forest-data";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
-import { getRegionVhi, regionLabel } from "@/lib/vhi-source";
+import { getRegionVhi, REGION_IDS_BY_NAME, regionLabel } from "@/lib/vhi-source";
 
 describe("annual Swiss VHI rules", () => {
   it("averages all twelve months rather than an August snapshot", () => {
@@ -61,6 +61,16 @@ describe("annual Swiss VHI rules", () => {
     expect(ANNUAL_YEARS.length * YEAR_DURATION_MS).toBe(108000);
     expect(PRELIMINARY_YEARS[2026]).toBe("Jan–Oct");
     expect(regionLabel(47)).toBe("Alpstein");
+  });
+  it("lists regions alphabetically, with umlaut names collated in place", () => {
+    expect(REGION_IDS_BY_NAME).toHaveLength(38);
+    expect([...REGION_IDS_BY_NAME].sort((a, b) => a - b)).toEqual(AVAILABLE_REGION_IDS);
+    const names = REGION_IDS_BY_NAME.map(regionLabel);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, "de")));
+    expect(names[0]).toBe("Alpstein");
+    const marks = ["Oberengadin", "Östlicher Jura", "Rheintal"].map((name) => names.indexOf(name));
+    expect(marks.every((i) => i >= 0)).toBe(true);
+    expect(marks).toEqual([...marks].sort((a, b) => a - b));
   });
   it("uses equal-weight regional annual means for the national field", () => {
     const regions = AVAILABLE_REGION_IDS.map((id) => getAnnualRegion(2025, id)?.vhi ?? 0);
