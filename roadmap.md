@@ -64,6 +64,9 @@
 - [x] Replace the placeholder title with the project name; describe the three panels, Immersion Mode and the soundtrack.
 - [x] Document the FOEN/swisstopo VHI pipeline with figures verified against the supplied CSV; list the team as in the About section.
 
+# README picture examples
+- [x] Store the three supplied screenshots in docs/ and link them from the README: general overview, Immersion Mode, and the light-festival mockup.
+
 # Round restart pause
 - [x] Keep the final picture moving very slowly during the 1-second silent break before restarting at 1991.
 - [x] Verify slow picture motion and silence in the live preview, return to 1991, and unchanged 1000 ms restart timer in tests.
