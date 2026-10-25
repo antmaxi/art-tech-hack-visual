@@ -41,7 +41,7 @@ export function AboutDialog({ container }: Props) {
               <dt>Sound</dt><dd>An original acoustic score is locked directly to time and data. Moving from historical droughts to peak recovery and into today’s uncertain climate trajectory, the sound shifts between acoustic tension and warm, resonant harmony.</dd>
               <dt>Physical Space</dt><dd>Conceived for public light installations and festivals (such as Zauberpark at Zurich Airport), the work is designed to project the living breath of data directly onto real canopies and forest pathways—turning climate science into an immediate, communal encounter.</dd>
             </dl>
-            <p className="about-moments"><em>Key moments to explore:</em> <strong>1992</strong> (historic drought), <strong>2017</strong> (peak vitality), and <strong>2025–2026</strong> (emerging climate pressure).</p>
+            <p className="about-moments"><em>Key moments to explore:</em> <strong>1992</strong> (vegetation stress), <strong>2017</strong> (peak vitality), and <strong>2025–2026</strong> (emerging climate pressure).</p>
             <h2>The Team</h2>
             <p><em>The Forest’s Breath</em> was created at the intersection of four disciplines:</p>
             <dl>
