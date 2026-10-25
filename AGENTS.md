@@ -11,7 +11,7 @@
 
 - Keep the Zauberpark concept in a scoped modal that mirrors the existing field canvas rather than remounting the installation, so the timeline, evolving animation and shared audio survive opening and closing it.
 - Mount the concept portal inside the Forest wall and let its dialog own keyboard dismissal while open, so it also works within document fullscreen without exiting the underlying immersive mode.
-- The Zauberpark mockup presents the supplied authentic venue photograph alone as a static image at its original proportions and quality, with no sampled canvases, projections, controls, captions or motion; it stays a dialog inside the Forest wall so opening it never exits Immersion Mode.
+- Keep the Zauberpark static proposal board confined to its existing dialog component and CSS module, using the unchanged photograph and a secondary static sketch without sampled canvases; this isolates presentation changes from the installation and preserves Immersion Mode.
 - Panel 2 retains the original Canopy on pure black and regional annual VHI outside immersion; canopy-scope selects the existing national annual mean only during immersion. Keep the same Canopy mounted with its entry terrain region fixed, screen-blended above the breathing canvas only under .is-immersive, so regional selection and animation survive mode changes.
 - Canopy health-field generation uses a region-independent seed in national scope and reads its initial health after terrain loading; this prevents regional patterns and stale asynchronous health from overriding immersive national data without changing terrain or drawing logic.
 - Keep map framing independent of river-station data, so removing river features does not change geographical context or raster layers.

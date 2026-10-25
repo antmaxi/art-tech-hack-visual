@@ -1,0 +1,102 @@
+.boardDialog:global(.zauber-view) {
+  padding: 32px 40px;
+  overflow-y: auto;
+  color: var(--forest-ink);
+  background: var(--forest-wall);
+}
+
+.board {
+  width: min(1672px, 100%, calc((100dvh - 256px) * 1.7768));
+  min-width: 0;
+}
+
+.heading {
+  padding: 0 48px 24px 0;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin: 0 0 14px;
+  color: var(--forest-dim);
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.venue {
+  margin: 0;
+  color: var(--forest-earth);
+  font-size: 9px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.board .photograph {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 1672px;
+  max-height: none;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding-top: 22px;
+}
+
+.sketch {
+  display: block;
+  width: 188px;
+  max-width: 38%;
+  height: auto;
+  color: var(--forest-ink);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.72;
+}
+
+.canopyMarks { stroke: var(--forest-mid); }
+.contourMarks { stroke: var(--forest-earth); }
+
+.note {
+  text-align: right;
+  padding-bottom: 6px;
+}
+
+.note h3 {
+  margin: 0 0 12px;
+  font-size: 10px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.note p {
+  margin: 0;
+  color: var(--forest-dim);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+  .boardDialog:global(.zauber-view) { padding: 32px 18px; }
+  .board { width: 100%; }
+  .title { font-size: 12px; }
+  .subtitle { font-size: 14px; }
+  .venue { font-size: 8px; }
+  .footer { gap: 12px; padding-top: 20px; }
+  .note p { font-size: 9px; max-width: 170px; }
+}
