@@ -66,10 +66,10 @@
   left: 0;
   bottom: 0;
   box-sizing: border-box;
-  width: 188px;
-  max-width: 42%;
+  width: 226px;
+  max-width: 44%;
   height: auto;
-  padding: 12px 16px;
+  padding: 15px 19px;
   background: var(--sketch-void);
   color: var(--forest-ink);
   fill: none;
@@ -112,5 +112,5 @@
   .footer { gap: 12px; padding-top: 20px; }
   .note p { font-size: 9px; max-width: 170px; }
   .context { max-width: 140px; font-size: 7px; }
-  .sketch { width: 132px; padding: 9px 12px; }
+  .sketch { width: 158px; padding: 11px 14px; }
 }
