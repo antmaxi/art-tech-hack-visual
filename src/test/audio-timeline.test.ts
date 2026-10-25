@@ -14,12 +14,12 @@ describe("continuous soundtrack timeline", () => {
     expect(indexForAudioTime(0, 36)).toBe(0);
   });
 
-  it("holds the final picture for exactly half a second before restarting", () => {
+  it("holds the final picture for exactly one second before restarting", () => {
     vi.useFakeTimers();
     try {
       const restart = vi.fn();
       scheduleRoundRestart(restart);
-      vi.advanceTimersByTime(499);
+      vi.advanceTimersByTime(999);
       expect(restart).not.toHaveBeenCalled();
       vi.advanceTimersByTime(1);
       expect(restart).toHaveBeenCalledTimes(1);
@@ -34,7 +34,7 @@ describe("continuous soundtrack timeline", () => {
       const restart = vi.fn();
       const cancel = scheduleRoundRestart(restart);
       cancel();
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(1000);
       expect(restart).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();

@@ -1,6 +1,6 @@
 import { YEAR_DURATION_MS } from "@/lib/annual-vhi";
 
-export const ROUND_PAUSE_MS = 500;
+export const ROUND_PAUSE_MS = 1000;
 
 /** Return a cancellation function so manual navigation cannot trigger a stale restart. */
 export function scheduleRoundRestart(restart: () => void): () => void {
