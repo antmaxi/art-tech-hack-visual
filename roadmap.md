@@ -63,3 +63,7 @@
 # README rewrite
 - [x] Replace the placeholder title with the project name; describe the three panels, Immersion Mode and the soundtrack.
 - [x] Document the FOEN/swisstopo VHI pipeline with figures verified against the supplied CSV; list the team as in the About section.
+
+# Round transition
+- [ ] Hold the final picture silently for two seconds before restarting at 1991, with and without sound.
+- [ ] Verify frozen visuals, continuous within-round audio, and restart timing.
