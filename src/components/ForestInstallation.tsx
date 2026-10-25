@@ -13,6 +13,7 @@ import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { REGION_IDS_BY_NAME, regionLabel } from "@/lib/vhi-source";
 import { createMapFraming } from "@/lib/map-framing";
 import { indexForAudioTime } from "@/lib/audio-timeline";
+import { createRoundPause } from "@/lib/round-pause";
 import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, FRAME_INTERVAL_MS, frameTimeScale, resolutionOnImmersiveEnter, type FieldResolution } from "@/lib/field-resolution";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -22,6 +23,10 @@ export function ForestInstallation() {
   const [regionId, setRegionId] = useState(DEFAULT_SELECTION);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
+  const [roundHolding, setRoundHolding] = useState(false);
+  const holding = useRef(false);
+  const roundPause = useRef<ReturnType<typeof createRoundPause> | null>(null);
+  if (!roundPause.current) roundPause.current = createRoundPause();
   const [immersive, setImmersive] = useState(false);
   const [resolution, setResolution] = useState<FieldResolution>(DEFAULT_FIELD_RESOLUTION);
   const fitField = useRef<(() => void) | null>(null);
@@ -49,7 +54,16 @@ export function ForestInstallation() {
   const audio = useRef<HTMLAudioElement | null>(null);
   const barRef = useRef<HTMLElement | null>(null);
 
+  const beginRoundHold = useCallback(() => {
+    holding.current = true;
+    audio.current?.pause();
+    setRoundHolding(true);
+  }, []);
+
   const selectYear = useCallback((selected: number) => {
+    roundPause.current?.reset();
+    holding.current = false;
+    setRoundHolding(false);
     setIndex(selected);
     // Only deliberate timeline/keyboard navigation seeks the soundtrack.
     if (audio.current) audio.current.currentTime = audioTimeForIndex(selected);
@@ -160,10 +174,25 @@ export function ForestInstallation() {
 
   // ---------- playback ----------
   useEffect(() => {
-    if (!playing || sound) return;
-    const t = setTimeout(() => setIndex((i) => (i + 1) % years.length), YEAR_DURATION_MS);
+    if (!playing || sound || roundHolding) return;
+    const t = setTimeout(() => {
+      if (index === years.length - 1) beginRoundHold();
+      else setIndex((i) => i + 1);
+    }, YEAR_DURATION_MS);
     return () => clearTimeout(t);
-  }, [playing, sound, index, years.length, year.vhi]);
+  }, [playing, sound, roundHolding, index, years.length, beginRoundHold]);
+
+  useEffect(() => {
+    const hold = roundPause.current;
+    if (!hold || !roundHolding || !playing) return;
+    hold.resume(() => {
+      holding.current = false;
+      setIndex(0);
+      if (audio.current) audio.current.currentTime = 0;
+      setRoundHolding(false);
+    });
+    return () => hold.pause();
+  }, [roundHolding, playing]);
 
   // ---------- animation: bottom timeline + PANEL 3 ----------
   useEffect(() => {
@@ -400,8 +429,10 @@ export function ForestInstallation() {
     const loop = (t: number) => {
       const timeScale = frameTimeScale(lastFrame ? t - lastFrame : FRAME_INTERVAL_MS);
       lastFrame = t;
-      drawTimeline(t);
-      drawField(timeScale);
+      if (!holding.current) {
+        drawTimeline(t);
+        drawField(timeScale);
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -422,7 +453,7 @@ export function ForestInstallation() {
     fitField.current?.();
   }, [immersive, resolution]);
 
-  // ---------- sound (composed track, synced one-to-one with the timeline: 3 s per year, 108 s loop) ----------
+  // ---------- sound (continuous recording, followed by the shared silent hold) ----------
   useEffect(() => {
     if (!sound) {
       audio.current?.pause();
@@ -430,36 +461,41 @@ export function ForestInstallation() {
     }
     if (!audio.current) {
       const track = new Audio(arthack.url);
-      track.loop = true;
+      track.loop = false;
       track.preload = "auto";
       audio.current = track;
     }
     const track = audio.current;
-    track.currentTime = audioTimeForIndex(live.current.index);
+    if (!holding.current) track.currentTime = audioTimeForIndex(live.current.index);
     const syncYear = () => {
-      if (!live.current.playing) return;
+      if (!live.current.playing || holding.current) return;
       setIndex(indexForAudioTime(track.currentTime, live.current.years.length));
     };
     track.addEventListener("timeupdate", syncYear);
-    return () => track.removeEventListener("timeupdate", syncYear);
-  }, [sound]);
+    track.addEventListener("ended", beginRoundHold);
+    return () => {
+      track.removeEventListener("timeupdate", syncYear);
+      track.removeEventListener("ended", beginRoundHold);
+    };
+  }, [sound, beginRoundHold]);
 
   // The recording is the playback clock. Pause/resume without resetting its
   // position; automatic year updates must never seek or restart the audio.
   useEffect(() => {
     const track = audio.current;
     if (!track || !sound) return;
-    if (!playing) {
+    if (!playing || roundHolding) {
       track.pause();
       return;
     }
     track.play().catch(() => {});
-  }, [playing, sound]);
+  }, [playing, sound, roundHolding]);
 
   useEffect(() => {
     return () => {
       audio.current?.pause();
       audio.current = null;
+      roundPause.current?.reset();
     };
   }, []);
 
@@ -526,7 +562,7 @@ export function ForestInstallation() {
   const last = years[years.length - 1]!.year;
 
   return (
-    <div ref={wallRef} className={`forest-wall ${immersive ? "is-immersive" : ""} ${idle ? "is-idle" : ""}`}>
+    <div ref={wallRef} data-round-holding={roundHolding} className={`forest-wall ${immersive ? "is-immersive" : ""} ${idle ? "is-idle" : ""}`}>
       <div className="forest-panels">
         <section className="forest-sheet forest-sheet-side" aria-label="Place">
           <div className="forest-map" ref={mapEl} />
@@ -534,7 +570,7 @@ export function ForestInstallation() {
         </section>
 
         <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
-          <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} dataScope={isNationalScope(regionId, immersive) ? "national" : "regional"} />
+          <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} frozen={roundHolding} dataScope={isNationalScope(regionId, immersive) ? "national" : "regional"} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
 
