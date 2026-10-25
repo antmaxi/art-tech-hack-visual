@@ -63,3 +63,7 @@
 # README rewrite
 - [x] Replace the placeholder title with the project name; describe the three panels, Immersion Mode and the soundtrack.
 - [x] Document the FOEN/swisstopo VHI pipeline with figures verified against the supplied CSV; list the team as in the About section.
+
+# Continuous immersive contours
+- [x] Trace refined continuous topographic lines and remove immersive dot specks, preserving the normal panel.
+- [ ] Verify High/Low controls, motion and immersive exit in the running installation.
