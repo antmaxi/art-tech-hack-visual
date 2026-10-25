@@ -2,6 +2,10 @@
 - [x] Refine only the concept environment using the supplied annotated reference; retain live/still projection and add the physical festival sign.
 - [x] Verify concept controls and unchanged Immersion Mode.
 
+# Map navigation correction
+- [x] Observe the actual map size and replace timing-based framing; retain Leaflet zoom and pan.
+- [ ] Verify menu selection, manual navigation, layout changes and immersion return.
+
 # Immersive national Canopy
 - [x] Decouple immersive health-field data from region identity and prevent stale health during terrain loading.
 - [x] Verify all-region national values, selection independence during immersion, and regional restoration.
