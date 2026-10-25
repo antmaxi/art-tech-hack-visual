@@ -11,3 +11,11 @@ export function fieldBufferSize(width: number, height: number, immersive: boolea
     height: Math.max(2, Math.floor(height * scale)),
   };
 }
+
+/** Per-frame animation increments are authored at 60 fps; real elapsed time scales them. */
+export const FRAME_INTERVAL_MS = 1000 / 60;
+
+export function frameTimeScale(deltaMs: number, maxScale = 3) {
+  if (!Number.isFinite(deltaMs) || deltaMs <= 0) return 1;
+  return Math.min(deltaMs / FRAME_INTERVAL_MS, maxScale);
+}
