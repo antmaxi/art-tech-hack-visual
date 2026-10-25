@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Instagram, X } from "lucide-react";
+import { Github, Instagram, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Props = { container: RefObject<HTMLDivElement | null> };
@@ -54,6 +54,12 @@ export function AboutDialog({ container }: Props) {
               ))}
             </dl>
             <p className="about-source">Data source: Federal Office for the Environment (FOEN) &amp; swisstopo (swissEO Vegetation Health Index, 1991–2026).</p>
+            <p className="about-repo">
+              <a href="https://github.com/antmaxi/art-tech-hack-visual" target="_blank" rel="noopener noreferrer" aria-label="View the project source code on GitHub">
+                <Github size={14} aria-hidden="true" />
+                github.com/antmaxi/art-tech-hack-visual
+              </a>
+            </p>
           </article>
           <Dialog.Close asChild>
             <Button variant="ghost" size="icon" className="zauber-close" aria-label="Close About" title="Close"><X /></Button>

@@ -281,6 +281,9 @@ body { background: var(--forest-wall); }
 .about-body dd { margin: 2px 0 0; color: var(--forest-dim); }
 .about-body .about-moments { margin-top: 12px; }
 .about-body .about-source { margin-top: 16px; font-size: 11px; color: var(--forest-dim); }
+.about-body .about-repo { margin-top: 6px; font-size: 11px; }
+.about-body .about-repo a { display: inline-flex; align-items: center; gap: 6px; color: var(--forest-dim); text-decoration: none; }
+.about-body .about-repo a:hover { color: var(--forest-emerald); text-decoration: underline; }
 .about-view .zauber-close { position: fixed; z-index: 2; right: 18px; top: 18px; background: transparent; color: var(--forest-dim); border: 0; box-shadow: none; }
 @media (max-width: 820px) {
   .forest-foot { flex-wrap: wrap; }
