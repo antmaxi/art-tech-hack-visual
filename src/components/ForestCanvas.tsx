@@ -122,7 +122,6 @@ export function ForestCanvas({
   regionId,
   vhi,
   dataScope = "regional",
-  frozen = false,
 }: {
   regionId: number;
   rain: number;
@@ -131,13 +130,10 @@ export function ForestCanvas({
   /** Annual VHI (0..100) in the active data scope; null/undefined = no observation. */
   vhi?: number | null;
   dataScope?: "regional" | "national";
-  frozen?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const live = useRef({ rain, airTemp, flow, vhi, dataScope });
   const [ready, setReady] = useState(false);
-  const frozenRef = useRef(frozen);
-  frozenRef.current = frozen;
 
   useEffect(() => {
     live.current = { rain, airTemp, flow, vhi, dataScope };
@@ -337,10 +333,6 @@ export function ForestCanvas({
       setReady(true);
 
       const loop = () => {
-        if (frozenRef.current) {
-          raf = requestAnimationFrame(loop);
-          return;
-        }
         t += 0.016;
         f++;
         if (f % 120 === 0) topUp();
