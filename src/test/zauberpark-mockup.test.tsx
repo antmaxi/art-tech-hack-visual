@@ -17,4 +17,15 @@ describe("Zauberpark mockup", () => {
     expect(screen.queryByText("Breathing")).toBeNull();
     expect(screen.queryByText("Still")).toBeNull();
   });
+
+  it("sits the sketch directly over the photograph and labels the board as hypothetical", () => {
+    render(<ZauberparkConcept container={{ current: null }} open onOpenChange={() => {}} />);
+    const dialog = screen.getByRole("dialog");
+    const photograph = dialog.querySelector("img")!;
+    const sketch = dialog.querySelector("svg")!;
+    // the sketch shares the photograph's frame (bottom-left overlay), it is not a footer row
+    expect(sketch.parentElement).toBe(photograph.parentElement);
+    expect(dialog.querySelector("footer")?.contains(sketch)).toBe(false);
+    expect(screen.getByText("HYPOTHETICAL PROPOSAL · POTENTIAL EXHIBITION CONTEXT · ZURICH, SWITZERLAND")).toBeTruthy();
+  });
 });

@@ -27,18 +27,21 @@ export function ZauberparkConcept(props: Props) {
           <Dialog.Title className="zauber-title-sr">Zauberpark</Dialog.Title>
           <div className={styles["board"]}>
             <header className={styles["heading"]}>
-              <h2 className={styles["title"]}>A WORLD RUNNING OUT OF BREATH</h2>
-              <p className={styles["subtitle"]}>An immersive light installation</p>
-              <p className={styles["venue"]}>ZAUBERPARK · ZURICH AIRPORT · 2026</p>
+              <div className={styles["headingText"]}>
+                <h2 className={styles["title"]}>A WORLD RUNNING OUT OF BREATH</h2>
+                <p className={styles["subtitle"]}>An immersive light installation</p>
+                <p className={styles["venue"]}>ZAUBERPARK · ZURICH AIRPORT · 2026</p>
+              </div>
+              <p className={styles["context"]}>HYPOTHETICAL PROPOSAL · POTENTIAL EXHIBITION CONTEXT · ZURICH, SWITZERLAND</p>
             </header>
-          <img
-            className={`zauber-photograph ${styles["photograph"]}`}
-            src={photograph.url}
-            width={1672}
-            height={941}
-            alt="Zauberpark light festival forest path at dusk, with light patterns projected across the ground and the surrounding foliage"
-          />
-            <footer className={styles["footer"]}>
+            <div className={styles["stage"]}>
+              <img
+                className={`zauber-photograph ${styles["photograph"]}`}
+                src={photograph.url}
+                width={1672}
+                height={941}
+                alt="Zauberpark light festival forest path at dusk, with light patterns projected across the ground and the surrounding foliage"
+              />
               <svg className={styles["sketch"]} viewBox="0 0 220 100" role="img" aria-label="Pencil concept sketch of a forest path with canopy and contour projection layers">
                 <g opacity="0.65">
                   <path d="M17 90 99 35 115 34 204 89M24 92 102 38M115 38 195 93M99 35 108 31 119 35" />
@@ -51,6 +54,8 @@ export function ZauberparkConcept(props: Props) {
                 <path d="M95 45c10 3 19-6 28 1M85 53c16-7 25 9 48 0M72 61c13-9 21 8 36 5s24-11 37-5M58 71c19-13 28 9 49 6s35-13 52-4M41 83c20-11 29 3 46 2s24-9 41-6 22 15 47 4M53 90c21-7 30 6 51 1s27-6 45 1" />
                 <path className={styles["contourMarks"]} d="M80 58c13-3 18 8 33 3s17-5 25-3M54 77c17-5 20 7 37 5m26 3c14-7 24 5 39 3" />
               </svg>
+            </div>
+            <footer className={styles["footer"]}>
               <div className={styles["note"]}>
                 <h3>LIGHT AS DATA</h3>
                 <p>Vegetation · Temperature · Landscape</p>
