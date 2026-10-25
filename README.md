@@ -49,7 +49,7 @@ Key moments to explore: **1992** (historic drought), **2017** (peak vitality), a
 ## Links
 
 - Repository: [github.com/antmaxi/art-tech-hack-visual](https://github.com/antmaxi/art-tech-hack-visual)
-- Data source: [FOEN & swisstopo — swissEO Vegetation Health Index](https://www.swisstopo.admin.ch/en/geodata/landscape/vegetation-health-index-vhi.html)
+- Data source: [swissEO VHI — Vegetation Health Index (swisstopo)](https://opendata.swiss/en/dataset/swisseo-vhi-karte-des-vhi), layer `ch.swisstopo.swisseo_vhi_v100`
 
 ---
 
