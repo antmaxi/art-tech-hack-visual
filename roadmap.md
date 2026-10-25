@@ -66,4 +66,4 @@
 
 # Round restart pause
 - [x] Keep the final picture moving very slowly during the 1-second silent break before restarting at 1991.
-- [ ] Verify slow picture motion, silence and unchanged restart timing.
+- [x] Verify slow picture motion and silence in the live preview, return to 1991, and unchanged 1000 ms restart timer in tests.
