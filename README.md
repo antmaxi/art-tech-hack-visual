@@ -21,6 +21,20 @@ The installation runs as three synchronized panels:
 
 An original 108-second score is locked directly to the timeline — three seconds per year — so sound, colour and movement advance together from 1991 to 2026.
 
+## In pictures
+
+The three-panel interface, with the chronological timeline running along the bottom:
+
+![The three-panel installation: the map of Switzerland, the Canopy and the breathing landscape, with the 1991–2026 timeline below](docs/general-overview.png)
+
+Immersion Mode, where the panels fold into one full-screen field:
+
+![Immersion Mode: glowing topographic contours over pure black, with the Canopy layered above the breathing landscape](docs/immersive-view.png)
+
+A concept mockup for showing the piece as a light installation at a festival:
+
+![Mockup for a light festival: the projected breathing landscape along a park path at dusk, beside a Zauberpark Light Festival sign](docs/zauberpark-mockup.png)
+
 ## The data
 
 Source: **Federal Office for the Environment (FOEN) & swisstopo** — swissEO Vegetation Health Index (VHI), 1991–2026.
