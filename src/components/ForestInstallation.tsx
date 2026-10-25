@@ -80,9 +80,22 @@ export function ForestInstallation() {
         polygon.on("click", () => setRegionId(region.id));
         return { id: region.id, polygon };
       });
+      let framedSelection: number | undefined;
+      const frameSelection = (selected: number) => {
+        if (!map) return;
+        const selectedPolygon = polygons.find(({ id }) => id === selected)?.polygon;
+        map.invalidateSize({ pan: false });
+        map.fitBounds(selectedPolygon?.getBounds() ?? bounds, {
+          padding: [16, 16],
+          maxZoom: 12,
+          animate: false,
+        });
+        framedSelection = selected;
+      };
       mapApi.current = {
         show: (y, selected) => {
           if (!map) return;
+          if (framedSelection !== selected) frameSelection(selected);
           polygons.forEach(({ id, polygon }) => {
             const annual = getAnnualRegion(y.year, id);
             const color = annual?.vhi != null ? rgb(vhiColor(annual.vhi)) : outline;
@@ -113,11 +126,11 @@ export function ForestInstallation() {
             if (id === selected) polygon.bringToFront();
           });
         },
-        resize: () => map?.invalidateSize(),
+        resize: () => frameSelection(live.current.regionId),
       };
       setTimeout(() => {
-        map?.invalidateSize();
-        map?.fitBounds(bounds, { padding: [4, 4] });
+        if (disposed) return;
+        frameSelection(live.current.regionId);
         const currentYear = live.current.years[live.current.index];
         if (currentYear) mapApi.current?.show(currentYear, live.current.regionId);
       }, 120);
