@@ -13,6 +13,7 @@ import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { REGION_IDS_BY_NAME, regionLabel } from "@/lib/vhi-source";
 import { createMapFraming } from "@/lib/map-framing";
 import { indexForAudioTime } from "@/lib/audio-timeline";
+import { traceFieldContours, visibleContourRing } from "@/lib/field-contours";
 import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, FRAME_INTERVAL_MS, frameTimeScale, resolutionOnImmersiveEnter, type FieldResolution } from "@/lib/field-resolution";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -174,6 +175,7 @@ export function ForestInstallation() {
     const low = document.createElement("canvas");
     const lctx = low.getContext("2d")!;
     let buffer: ImageData | null = null;
+    let elevations: number[] = [];
 
     const fit = () => {
       const dpr = Math.min(2, devicePixelRatio || 1);
@@ -191,6 +193,7 @@ export function ForestInstallation() {
       field.dataset["sampleWidth"] = String(size.width);
       field.dataset["sampleHeight"] = String(size.height);
       buffer = lctx.createImageData(low.width, low.height);
+      elevations = new Array(low.width * low.height).fill(0);
     };
     fitField.current = fit;
     fit();
@@ -333,19 +336,22 @@ export function ForestInstallation() {
           const e = (noise(u * blobFreq * 0.75 + q * warp, v * blobFreq * 0.75 + r * warp + clock * 0.5) + 1) * 0.5;
           const fine = (noise(u * 9 + 8, v * 9 + clock) + 1) * 0.5;
           // topographic contours: few broad rings at peak health, many tight rings in drought
-          const c = (e * (9 + stress * 9) + clock * 0.6) % 1;
+          const elevation = e * (9 + stress * 9) + clock * 0.6;
+          // Keep contour levels bounded while retaining their continuous drift.
+          elevations[j * w + i] = e * (9 + stress * 9) + (clock * 0.6) % 1;
+          const c = elevation % 1;
           // drought sharpens the contours into thin vibrant lines (extra crisp in Immersion Mode)
           const contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 8 + blacken * 12));
           // fragmentation under stress (continuous, so year transitions never pop);
           // in Immersion Mode the drought lines stay connected so they read as drawn contours
-          const frag = 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1) * (1 - blacken * 0.6);
+          const frag = live.current.immersive ? 1 : 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1);
           // in drought the glow between lines falls back to near-black, keeping only a slight gradient
           const lum = (0.08 * (1 - stress * 0.75) - blacken * 0.06 + e * e * (0.9 - stress * 0.55 - blacken * 0.6)) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
           // continuous gradient: deep emerald at peak health, dark scorched rust in drought
           let R = 6 + lum * (34 + stress * 130);
           let G = 12 + lum * (185 - stress * 115) + fine * 18 * (1 - stress * 0.7);
           let B = 10 + lum * (95 - stress * 60);
-          const cl = contour * (0.35 + health * 0.6 + stress * 0.3 + blacken * 0.45) * frag;
+          const cl = live.current.immersive ? 0 : contour * (0.35 + health * 0.6 + stress * 0.3 + blacken * 0.45) * frag;
           R += cl * (90 + stress * 180);
           G += cl * (200 - stress * 100 - blacken * 45);
           B += cl * (130 - stress * 90 - blacken * 55);
@@ -362,6 +368,42 @@ export function ForestInstallation() {
       fctx.imageSmoothingEnabled = true;
       fctx.imageSmoothingQuality = "high";
       fctx.drawImage(low, 0, 0, W, H);
+
+      if (live.current.immersive) {
+        // Stroke interpolated paths at display resolution rather than enlarging
+        // isolated bright raster samples. Both quality settings remain continuous.
+        const sx = W / w;
+        const sy = H / h;
+        const strength = 0.35 + health * 0.6 + stress * 0.3 + blacken * 0.45;
+        fctx.strokeStyle = `rgb(${Math.round(6 + strength * (90 + stress * 180))},${Math.round(12 + strength * (200 - stress * 100 - blacken * 45))},${Math.round(10 + strength * (130 - stress * 90 - blacken * 55))})`;
+        fctx.lineWidth = Math.max(1, W / field.getBoundingClientRect().width) * (1.15 + health * 0.65);
+        fctx.lineJoin = "round";
+        fctx.lineCap = "round";
+        fctx.beginPath();
+        for (const level of traceFieldContours(elevations, w, h)) {
+          for (const polygon of level.coordinates) {
+            for (const ring of polygon) {
+              if (!visibleContourRing(ring, sx, sy)) continue;
+              let connected = false;
+              for (const point of ring) {
+                const x = point[0];
+                const y = point[1];
+                if (x === undefined || y === undefined) continue;
+                // Marching squares closes polygons along the sample boundary;
+                // those artificial frame edges are not elevation contours.
+                if (x <= 0 || y <= 0 || x >= w || y >= h) {
+                  connected = false;
+                  continue;
+                }
+                if (connected) fctx.lineTo(x * sx, y * sy);
+                else fctx.moveTo(x * sx, y * sy);
+                connected = true;
+              }
+            }
+          }
+        }
+        fctx.stroke();
+      }
 
       // luminous particles
       fctx.globalCompositeOperation = "lighter";
@@ -385,7 +427,7 @@ export function ForestInstallation() {
         const pg = Math.round(255 - stress * 105);
         const pb = Math.round(190 - stress * 110);
         fctx.fillStyle = `rgba(${pr},${pg},${pb},${al})`;
-        fctx.fillRect(px[k]! * W, py[k]! * H, sz, sz);
+        if (!live.current.immersive) fctx.fillRect(px[k]! * W, py[k]! * H, sz, sz);
       }
       fctx.globalCompositeOperation = "source-over";
       // vignette for depth
