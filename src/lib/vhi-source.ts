@@ -1,4 +1,5 @@
 import data from "@/data/vhi-regions.json";
+import { AVAILABLE_REGION_IDS } from "@/lib/annual-vhi";
 
 export type VhiRegion = { id: number; bbox: number[]; rings: number[][][] };
 export const REGIONS = data.regions as VhiRegion[];
@@ -45,6 +46,10 @@ export const REGION_NAMES: Record<number, string> = {
   68: "Unterengadin",
 };
 export const regionLabel = (id: number) => REGION_NAMES[id] ?? `Region ${id}`;
+/** Region ids ordered alphabetically by name (German collation) for menus and lists. */
+export const REGION_IDS_BY_NAME = [...AVAILABLE_REGION_IDS].sort((a, b) =>
+  regionLabel(a).localeCompare(regionLabel(b), "de"),
+);
 export const getRegion = (id: number) => REGIONS.find((r) => r.id === id) ?? REGIONS.find((r) => r.id === DEFAULT_REGION)!;
 
 function hash(n: number) {
