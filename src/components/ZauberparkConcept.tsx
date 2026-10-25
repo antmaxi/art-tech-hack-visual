@@ -28,7 +28,7 @@ export function ZauberparkConcept(props: Props) {
           <div className={styles["board"]}>
             <header className={styles["heading"]}>
               <div className={styles["headingText"]}>
-                <h2 className={styles["title"]}>A WORLD RUNNING OUT OF BREATH</h2>
+                <h2 className={styles["title"]}>The Forest’s Breath</h2>
                 <p className={styles["subtitle"]}>An immersive light installation</p>
                 <p className={styles["venue"]}>ZAUBERPARK · ZURICH AIRPORT · 2026</p>
               </div>
@@ -57,7 +57,7 @@ export function ZauberparkConcept(props: Props) {
             </div>
             <footer className={styles["footer"]}>
               <div className={styles["note"]}>
-                <h3>LIGHT AS DATA</h3>
+                <h3>IMMERSION EXPERIENCE AS DATA</h3>
                 <p>Vegetation · Temperature · Landscape</p>
               </div>
             </footer>
