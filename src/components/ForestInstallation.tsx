@@ -40,8 +40,8 @@ export function ForestInstallation() {
   const immersiveTerrainRegion = useRef(regionId);
 
   // live values for the animation loop
-  const live = useRef({ years, index, mean, immersive, regionId, playing, resolution });
-  live.current = { years, index, mean, immersive, regionId, playing, resolution };
+  const live = useRef({ years, index, mean, immersive, regionId, playing, resolution, sound });
+  live.current = { years, index, mean, immersive, regionId, playing, resolution, sound };
 
   const wallRef = useRef<HTMLDivElement>(null);
   const mapEl = useRef<HTMLDivElement>(null);
@@ -57,8 +57,7 @@ export function ForestInstallation() {
     setIndex(selected);
     // Only deliberate timeline/keyboard navigation seeks the soundtrack.
     if (audio.current) audio.current.currentTime = audioTimeForIndex(selected);
-    if (live.current.playing && audio.current && !audio.current.paused) return;
-    if (live.current.playing && audio.current) audio.current.play().catch(() => {});
+    if (live.current.playing && live.current.sound && audio.current?.paused) audio.current.play().catch(() => {});
   }, []);
 
   const holdFinalPicture = useCallback(() => {
