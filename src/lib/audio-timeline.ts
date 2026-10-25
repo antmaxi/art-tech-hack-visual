@@ -2,6 +2,11 @@ import { YEAR_DURATION_MS } from "@/lib/annual-vhi";
 
 export const ROUND_PAUSE_MS = 1000;
 
+/** Keep the final year's artwork gently alive during the silent break. */
+export function roundAnimationScale(inBreak: boolean): number {
+  return inBreak ? 0.05 : 1;
+}
+
 /** Return a cancellation function so manual navigation cannot trigger a stale restart. */
 export function scheduleRoundRestart(restart: () => void): () => void {
   const timer = setTimeout(restart, ROUND_PAUSE_MS);

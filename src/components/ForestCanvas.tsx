@@ -122,7 +122,7 @@ export function ForestCanvas({
   regionId,
   vhi,
   dataScope = "regional",
-  frozen = false,
+  animationScale = 1,
 }: {
   regionId: number;
   rain: number;
@@ -131,11 +131,11 @@ export function ForestCanvas({
   /** Annual VHI (0..100) in the active data scope; null/undefined = no observation. */
   vhi?: number | null;
   dataScope?: "regional" | "national";
-  frozen?: boolean;
+  animationScale?: number;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const frozenRef = useRef(frozen);
-  frozenRef.current = frozen;
+  const animationScaleRef = useRef(animationScale);
+  animationScaleRef.current = animationScale;
   const live = useRef({ rain, airTemp, flow, vhi, dataScope });
   const [ready, setReady] = useState(false);
 
@@ -337,16 +337,14 @@ export function ForestCanvas({
       setReady(true);
 
       const loop = () => {
-        if (frozenRef.current) {
-          raf = requestAnimationFrame(loop);
-          return;
-        }
-        t += 0.016;
-        f++;
-        if (f % 120 === 0) topUp();
+        const speed = animationScaleRef.current;
+        t += 0.016 * speed;
+        const previousCycle = Math.floor(f / 120);
+        f += speed;
+        if (Math.floor(f / 120) > previousCycle) topUp();
 
         // watercolour memory: the ground shows through again each frame
-        ctx.globalAlpha = 0.05;
+        ctx.globalAlpha = 1 - Math.pow(0.95, speed);
         ctx.drawImage(ground, 0, 0);
         ctx.globalAlpha = 1;
 
@@ -375,7 +373,7 @@ export function ForestCanvas({
         }
 
         for (const tr of trees) {
-          if (tr.growth < 1) tr.growth = Math.min(1, tr.growth + 0.008);
+          if (tr.growth < 1) tr.growth = Math.min(1, tr.growth + 0.008 * speed);
 
           // a healthy tree breathes deep and slow; a thirsty one pants shallow and fast —
           // the same shared tempo as the breathing field, so they move as one in immersion
@@ -384,8 +382,8 @@ export function ForestCanvas({
           const depth = 0.18 + tr.health * 0.55 + rainDeep;
 
           // wind off the river, and the spring back to where it grew
-          tr.x += (tr.hx - tr.x) * 0.05 + Math.sin(t * 0.35 + tr.hy * 0.008) * (0.2 + s.flow * 0.012);
-          tr.y += (tr.hy - tr.y) * 0.05;
+          tr.x += ((tr.hx - tr.x) * 0.05 + Math.sin(t * 0.35 + tr.hy * 0.008) * (0.2 + s.flow * 0.012)) * speed;
+          tr.y += (tr.hy - tr.y) * 0.05 * speed;
 
           if (gust && pointer) {
             const dx = tr.x - pointer.x;
@@ -393,8 +391,8 @@ export function ForestCanvas({
             const dd = Math.hypot(dx, dy);
             if (dd < 160 && dd > 0.1) {
               const k = (1 - dd / 160) * 3;
-              tr.x += (dx / dd) * k;
-              tr.y += (dy / dd) * k;
+              tr.x += (dx / dd) * k * speed;
+              tr.y += (dy / dd) * k * speed;
             }
           }
 

@@ -65,5 +65,5 @@
 - [x] Document the FOEN/swisstopo VHI pipeline with figures verified against the supplied CSV; list the team as in the About section.
 
 # Round restart pause
-- [x] Hold the final picture silently for 1 second before restarting at 1991 (latest timing supersedes 3 s, 2 s and 0.5 s).
-- [x] Verify continuous audio, frozen pictures and restart timing (1000 ms timer tested; live preview confirms silence, unchanged canvas pixels and return to 1991).
+- [x] Keep the final picture moving very slowly during the 1-second silent break before restarting at 1991.
+- [x] Verify slow picture motion and silence in the live preview, return to 1991, and unchanged 1000 ms restart timer in tests.
