@@ -55,3 +55,7 @@
 - [x] Replace the projected mockup entirely with the supplied photograph as a single static image at original proportions and quality.
 - [x] Remove projections, sampled canvases, Still/Breathing and sound controls, captions, disclaimers, borders, gradients and motion.
 - [x] Verify the photograph is served unaltered, the mockup closes, and the three-panel interface plus Immersion Mode are unchanged.
+
+# GitHub presence
+- [x] Add a clickable GitHub logo link to the repository at the end of the About text.
+- [ ] Connect the project to https://github.com/antmaxi/art-tech-hack-visual — blocker: Git sync can only create a new private repository, it cannot link one that already exists; needs the user's choice in Project settings → Git.
