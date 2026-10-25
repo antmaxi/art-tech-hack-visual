@@ -1,15 +1,15 @@
 import type { RefObject } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { Instagram, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Props = { container: RefObject<HTMLDivElement | null> };
 
 const team = [
-  ["Silvia Forcina Barrero", "Statistics & Data Science", "Data sourcing, aggregation, and calibration to the visual and acoustic engines."],
-  ["Manu", "Artistic Direction & Curation", "Exhibition concept, visual direction, and website design."],
-  ["Anton", "Sound Design & Composition", "Synthesis of breath fragments via ElevenLabs and custom data-driven sound design."],
-  ["Tamari", "Spatial Design & Interactive Visuals", "Canopy algorithmic evolution and interactive real-time visuals."],
+  ["Silvia Forcina Barrero", "Statistics & Data Science", "Data sourcing, aggregation, and engineering of the visual and acoustic systems."],
+  ["Manuela Pita Vidal", "Artistic Direction & Curation", "Exhibition concept, artistic direction, visual identity, and website design, including AI-assisted audiovisual production and visual archive curation."],
+  ["Anton Maksimov", "Sound Design & Composition", "Synthesis of breath fragments via ElevenLabs and custom data-driven sound design."],
+  ["Tamari Karkhnishvili", "Spatial Design & Interactive Visuals", "Canopy algorithmic evolution and interactive real-time visuals.", "Data Analytics in the Humanities"],
 ];
 
 export function AboutDialog({ container }: Props) {
@@ -37,8 +37,20 @@ export function AboutDialog({ container }: Props) {
             <h2>The Team</h2>
             <p><em>The Forest’s Breath</em> was created at the intersection of four disciplines:</p>
             <dl>
-              {team.map(([n, r, d]) => (
-                <div key={n}><dt>{n} — <em>{r}</em></dt><dd>{d}</dd></div>
+              {team.map(([n, r, d, study]) => (
+                <div key={n}>
+                  <dt>{n} — <em>{r}</em></dt>
+                  {study && <dd><em>{study}</em></dd>}
+                  <dd>{d}</dd>
+                  {n === "Manuela Pita Vidal" && (
+                    <dd>
+                      <a href="https://www.instagram.com/pitart__/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs">
+                        <Instagram size={12} aria-hidden="true" />
+                        @pitart__
+                      </a>
+                    </dd>
+                  )}
+                </div>
               ))}
             </dl>
             <p className="about-source">Data source: Federal Office for the Environment (FOEN) &amp; swisstopo (swissEO Vegetation Health Index, 1991–2026).</p>
