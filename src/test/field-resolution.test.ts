@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize } from "@/lib/field-resolution";
+import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, FRAME_INTERVAL_MS, frameTimeScale } from "@/lib/field-resolution";
 
 describe("immersive contour resolution", () => {
   it("defaults to high quality", () => {
