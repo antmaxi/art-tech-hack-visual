@@ -324,7 +324,10 @@ export function ForestInstallation() {
       const warp = 1.1 + mStress * 2.6;
       // healthy years form large soft masses; drought breaks into tight agitated detail
       const blobFreq = 1.4 + stress * 1.4;
+      const imm = live.current.immersive;
+      if (prevRow.length !== w) prevRow = new Float32Array(w);
       for (let j = 0; j < h; j++) {
+        let leftC = 0;
         for (let i = 0; i < w; i++) {
           const u = ((i / w - 0.5) * zoom + 0.5) * (w / h);
           const v = (j / h - 0.5) * zoom + 0.5;
@@ -335,10 +338,21 @@ export function ForestInstallation() {
           // topographic contours: few broad rings at peak health, many tight rings in drought
           const c = (e * (9 + stress * 9) + clock * 0.6) % 1;
           // drought sharpens the contours into thin vibrant lines (extra crisp in Immersion Mode)
-          const contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 8 + blacken * 12));
+          let contour = Math.max(0, 1 - Math.abs(c - 0.5) * 2 * (6 + stress * 8 + blacken * 12));
+          if (imm) {
+            // anti-aliased in Immersion Mode: keep every line at least ~1 sample wide in screen space,
+            // so steep thin contours never break into separate dots
+            const wrap = (d: number) => { const a = Math.abs(d); return a > 0.5 ? 1 - a : a; };
+            const g = Math.max(i > 0 ? wrap(c - leftC) : 0, j > 0 ? wrap(c - prevRow[i]!) : 0);
+            const half = 0.5 / (6 + stress * 8 + blacken * 12);
+            const span = Math.max(half, g * 0.9);
+            contour = Math.max(contour, clamp(1 - Math.abs(c - 0.5) / span, 0, 1) * Math.min(1, half / span + 0.35));
+          }
+          leftC = c;
+          prevRow[i] = c;
           // fragmentation under stress (continuous, so year transitions never pop);
-          // in Immersion Mode the drought lines stay connected so they read as drawn contours
-          const frag = 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1) * (1 - blacken * 0.6);
+          // in Immersion Mode the lines stay fully connected so they read as drawn contours
+          const frag = imm ? 1 : 1 - clamp((stress * 0.45 - fine) * 5, 0, 0.85) * clamp((stress - 0.12) * 6, 0, 1);
           // in drought the glow between lines falls back to near-black, keeping only a slight gradient
           const lum = (0.08 * (1 - stress * 0.75) - blacken * 0.06 + e * e * (0.9 - stress * 0.55 - blacken * 0.6)) * (0.45 + health * 0.75) * (1 + breath * 0.25) * frag;
           // continuous gradient: deep emerald at peak health, dark scorched rust in drought
