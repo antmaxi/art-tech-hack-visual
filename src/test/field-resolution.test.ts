@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, FRAME_INTERVAL_MS, frameTimeScale } from "@/lib/field-resolution";
+import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, FRAME_INTERVAL_MS, frameTimeScale, resolutionOnImmersiveEnter } from "@/lib/field-resolution";
 
 describe("immersive contour resolution", () => {
   it("defaults to high quality", () => {
     expect(DEFAULT_FIELD_RESOLUTION).toBe("high");
   });
+
+  it("restores high every time immersion is entered, after an earlier low choice", () => {
+    expect(resolutionOnImmersiveEnter("low")).toBe("high");
+    expect(resolutionOnImmersiveEnter("high")).toBe("high");
+  });
+
 
   it("samples three times as many pixels in high mode, within its bounded budget", () => {
     const low = fieldBufferSize(1280, 1049, true, "low");

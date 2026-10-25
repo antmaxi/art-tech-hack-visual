@@ -1,6 +1,16 @@
 export type FieldResolution = "low" | "high";
 export const DEFAULT_FIELD_RESOLUTION: FieldResolution = "high";
 
+/** Immersion always opens sharp; a previous low choice is a within-session preference only. */
+export function resolutionOnImmersiveEnter(previous: FieldResolution): FieldResolution {
+  switch (previous) {
+    case "low":
+    case "high":
+      return DEFAULT_FIELD_RESOLUTION;
+  }
+}
+
+
 /** Keep the normal panel unchanged; increase actual contour samples in immersion. */
 export function fieldBufferSize(width: number, height: number, immersive: boolean, resolution: FieldResolution) {
   const high = immersive && resolution === "high";
