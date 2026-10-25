@@ -11,6 +11,7 @@ import { AVAILABLE_REGION_IDS, audioTimeForIndex, getAnnualRegion, normalizeVhi,
 import { ALL_SWITZERLAND, canopyAnnualVhi, DEFAULT_SELECTION, isNationalScope } from "@/lib/canopy-scope";
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { regionLabel } from "@/lib/vhi-source";
+import { createMapFraming } from "@/lib/map-framing";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
@@ -40,7 +41,7 @@ export function ForestInstallation() {
   const mapEl = useRef<HTMLDivElement>(null);
   const tlEl = useRef<HTMLCanvasElement>(null);
   const fieldEl = useRef<HTMLCanvasElement>(null);
-  const mapApi = useRef<{ show: (y: YearRecord, selected: number) => void; resize: () => void } | null>(null);
+  const mapApi = useRef<{ show: (y: YearRecord, selected: number) => void } | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   const barRef = useRef<HTMLElement | null>(null);
 
@@ -61,10 +62,13 @@ export function ForestInstallation() {
   useEffect(() => {
     let disposed = false;
     let map: import("leaflet").Map | null = null;
+    let sizeObserver: ResizeObserver | undefined;
+    let frameRequest = 0;
     import("leaflet").then((mod) => {
       const L = mod.default ?? mod;
       if (disposed || !mapEl.current) return;
-      map = L.map(mapEl.current, { zoomControl: false, attributionControl: false, zoomSnap: 0 });
+      const mapContainer = mapEl.current;
+      map = L.map(mapContainer, { zoomControl: false, attributionControl: false, zoomSnap: 0, zoomDelta: 0.25, wheelPxPerZoomLevel: 120 });
       L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 18,
         className: "forest-basemap",
@@ -80,22 +84,15 @@ export function ForestInstallation() {
         polygon.on("click", () => setRegionId(region.id));
         return { id: region.id, polygon };
       });
-      let framedSelection: number | undefined;
+      const frame = createMapFraming(map, selected => polygons.find(({ id }) => id === selected)?.polygon.getBounds() ?? bounds);
       const frameSelection = (selected: number) => {
-        if (!map) return;
-        const selectedPolygon = polygons.find(({ id }) => id === selected)?.polygon;
-        map.invalidateSize({ pan: false });
-        map.fitBounds(selectedPolygon?.getBounds() ?? bounds, {
-          padding: [16, 16],
-          maxZoom: 12,
-          animate: false,
-        });
-        framedSelection = selected;
+        if (disposed || live.current.immersive) return;
+        frame(selected, mapContainer.clientWidth, mapContainer.clientHeight);
       };
       mapApi.current = {
         show: (y, selected) => {
           if (!map) return;
-          if (framedSelection !== selected) frameSelection(selected);
+          frameSelection(selected);
           polygons.forEach(({ id, polygon }) => {
             const annual = getAnnualRegion(y.year, id);
             const color = annual?.vhi != null ? rgb(vhiColor(annual.vhi)) : outline;
@@ -126,17 +123,22 @@ export function ForestInstallation() {
             if (id === selected) polygon.bringToFront();
           });
         },
-        resize: () => frameSelection(live.current.regionId),
       };
-      setTimeout(() => {
+      sizeObserver = new ResizeObserver(() => {
+        cancelAnimationFrame(frameRequest);
+        frameRequest = requestAnimationFrame(() => frameSelection(live.current.regionId));
+      });
+      sizeObserver.observe(mapContainer);
+      frameRequest = requestAnimationFrame(() => {
         if (disposed) return;
-        frameSelection(live.current.regionId);
         const currentYear = live.current.years[live.current.index];
         if (currentYear) mapApi.current?.show(currentYear, live.current.regionId);
-      }, 120);
+      });
     });
     return () => {
       disposed = true;
+      cancelAnimationFrame(frameRequest);
+      sizeObserver?.disconnect();
       map?.remove();
       mapApi.current = null;
     };
@@ -181,7 +183,6 @@ export function ForestInstallation() {
     fit();
     const ro = new ResizeObserver(() => {
       fit();
-      mapApi.current?.resize();
     });
     ro.observe(tl);
     ro.observe(field);
