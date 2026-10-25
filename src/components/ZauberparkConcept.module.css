@@ -112,5 +112,5 @@
   .footer { gap: 12px; padding-top: 20px; }
   .note p { font-size: 9px; max-width: 170px; }
   .context { max-width: 140px; font-size: 7px; }
-  .sketch { width: 158px; padding: 11px 14px; }
+  .sketch { width: 112px; max-width: 30%; padding: 8px 11px; }
 }
