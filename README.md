@@ -38,7 +38,14 @@ The raw feed is monthly, so the project builds the series the artwork plays on:
 
 Key moments to explore: **1992** (vegetation stress), **2017** (peak vitality), and **2025–2026** (emerging climate pressure).
 
+## The sound
+
+The score is assembled by hand from breath samples synthesised with ElevenLabs. Each fragment is carefully glued into the next and then level-matched, so the loudness stays even across the whole 108 seconds. Underneath the breath sits a bed of forest sounds and a low-frequency drone that quietly increases anxiety as the index drops; in the final stretch a squeaky violin tremolo takes over, leaving the tension hanging in the room.
+
+![The multitrack arrangement of the score: forest bed, low-frequency drone, breath fragments and the closing high tremolo](docs/sound-engineering.png)
+
 ## The team
+
 
 *The Forest's Breath* was created at the intersection of four disciplines:
 
