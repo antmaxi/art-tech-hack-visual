@@ -46,7 +46,7 @@ Key moments to explore: **1992** (vegetation stress), **2017** (peak vitality), 
 | --- | --- | --- |
 | **Silvia Forcina Barrero** | Statistics & Computational Systems | Data architecture, algorithmic evolution, and engineering of visual and acoustic systems, with project coordination. |
 | **Manuela Pita Vidal** | Artistic Direction & Curation | Exhibition concept, artistic direction, visual identity, and website design, including AI-assisted audiovisual production and visual archive curation. · [@pitart__](https://www.instagram.com/pitart__/) |
-| **Anton Maksimov** | Sound Design & Composition | Synthesis of breath fragments via ElevenLabs and custom data-driven sound design. |
+| **Anton Maksimov** | Sound Design & Composition | Synthesis of breath fragments via ElevenLabs and custom data-driven sound design, with refinement of the visual components and set-up of the tools. |
 | **Tamari Karkhnishvili** | Data Analytics in the Humanities | Canopy algorithmic evolution and interactive real-time visuals. |
 
 ## Links
