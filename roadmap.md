@@ -66,4 +66,4 @@
 
 # Continuous immersive contours
 - [x] Trace refined continuous topographic lines and remove immersive dot specks, preserving the normal panel.
-- [ ] Verify High/Low controls, motion and immersive exit in the running installation.
+- [x] Verify High/Low controls, motion and immersive exit in the running installation; contour and timing tests pass, with no browser errors.
