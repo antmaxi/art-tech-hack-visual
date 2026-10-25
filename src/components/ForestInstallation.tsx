@@ -13,7 +13,7 @@ import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { REGION_IDS_BY_NAME, regionLabel } from "@/lib/vhi-source";
 import { createMapFraming } from "@/lib/map-framing";
 import { indexForAudioTime } from "@/lib/audio-timeline";
-import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, type FieldResolution } from "@/lib/field-resolution";
+import { DEFAULT_FIELD_RESOLUTION, FIELD_INTERVAL_MS_FALLBACK as _unused, fieldBufferSize, FRAME_INTERVAL_MS, frameTimeScale, type FieldResolution } from "@/lib/field-resolution";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
