@@ -36,7 +36,7 @@ The raw feed is monthly, so the project builds the series the artwork plays on:
 - Visuals are calibrated to the record itself: the worst year in the dataset reads as maximum drought, the best as peak vitality.
 - 2026 is **preliminary** (January–October).
 
-Key moments to explore: **1992** (historic drought), **2017** (peak vitality), and **2025–2026** (emerging climate pressure).
+Key moments to explore: **1992** (vegetation stress), **2017** (peak vitality), and **2025–2026** (emerging climate pressure).
 
 ## The team
 
