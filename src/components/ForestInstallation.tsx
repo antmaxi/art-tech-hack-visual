@@ -13,6 +13,7 @@ import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { regionLabel } from "@/lib/vhi-source";
 import { createMapFraming } from "@/lib/map-framing";
 import { indexForAudioTime } from "@/lib/audio-timeline";
+import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, type FieldResolution } from "@/lib/field-resolution";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
@@ -22,6 +23,8 @@ export function ForestInstallation() {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [immersive, setImmersive] = useState(false);
+  const [resolution, setResolution] = useState<FieldResolution>(DEFAULT_FIELD_RESOLUTION);
+  const fitField = useRef<(() => void) | null>(null);
   const [sound, setSound] = useState(false);
   const [idle, setIdle] = useState(false);
   const [legend, setLegend] = useState(false);
@@ -35,8 +38,8 @@ export function ForestInstallation() {
   const immersiveTerrainRegion = useRef(regionId);
 
   // live values for the animation loop
-  const live = useRef({ years, index, mean, immersive, regionId, playing });
-  live.current = { years, index, mean, immersive, regionId, playing };
+  const live = useRef({ years, index, mean, immersive, regionId, playing, resolution });
+  live.current = { years, index, mean, immersive, regionId, playing, resolution };
 
   const wallRef = useRef<HTMLDivElement>(null);
   const mapEl = useRef<HTMLDivElement>(null);
@@ -180,13 +183,16 @@ export function ForestInstallation() {
       const fr = field.getBoundingClientRect();
       field.width = Math.max(2, Math.floor(fr.width * dpr));
       field.height = Math.max(2, Math.floor(fr.height * dpr));
-      // generative buffer: capped pixel budget for projector laptops
-      const budget = 70000;
-      const s = Math.min(0.5, Math.sqrt(budget / Math.max(1, fr.width * fr.height)));
-      low.width = Math.max(2, Math.floor(fr.width * s));
-      low.height = Math.max(2, Math.floor(fr.height * s));
+      // More actual contour samples in immersion, not just a larger output canvas.
+      const size = fieldBufferSize(fr.width, fr.height, live.current.immersive, live.current.resolution);
+      low.width = size.width;
+      low.height = size.height;
+      field.dataset["resolution"] = live.current.immersive ? live.current.resolution : "low";
+      field.dataset["sampleWidth"] = String(size.width);
+      field.dataset["sampleHeight"] = String(size.height);
       buffer = lctx.createImageData(low.width, low.height);
     };
+    fitField.current = fit;
     fit();
     const ro = new ResizeObserver(() => {
       fit();
@@ -352,6 +358,7 @@ export function ForestInstallation() {
       const W = field.width;
       const H = field.height;
       fctx.imageSmoothingEnabled = true;
+      fctx.imageSmoothingQuality = "high";
       fctx.drawImage(low, 0, 0, W, H);
 
       // luminous particles
@@ -396,8 +403,14 @@ export function ForestInstallation() {
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      fitField.current = null;
     };
   }, []);
+
+  // Resize only the drawing buffers: do not restart the field, Canopy or soundtrack.
+  useEffect(() => {
+    fitField.current?.();
+  }, [immersive, resolution]);
 
   // ---------- sound (composed track, synced one-to-one with the timeline: 3 s per year, 108 s loop) ----------
   useEffect(() => {
@@ -568,6 +581,18 @@ export function ForestInstallation() {
             Legend
           </Button>
           <AboutDialog container={wallRef} />
+          {immersive && (
+            <Button
+              variant="ghost"
+              type="button"
+              aria-label={`Resolution ${resolution}, switch to ${resolution === "high" ? "low" : "high"}`}
+              aria-pressed={resolution === "high"}
+              title={resolution === "high" ? "Switch to low resolution for smoother playback" : "Switch to high resolution for sharper contours"}
+              onClick={() => setResolution((value) => value === "high" ? "low" : "high")}
+            >
+              Resolution {resolution}
+            </Button>
+          )}
           <div className="forest-cta">
             {immersive ? (
               <Button variant="ghost" type="button" onClick={exitImmersive}>
