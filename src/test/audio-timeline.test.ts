@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { indexForAudioTime, scheduleRoundRestart } from "@/lib/audio-timeline";
+import { indexForAudioTime, roundAnimationScale, scheduleRoundRestart } from "@/lib/audio-timeline";
 
 describe("continuous soundtrack timeline", () => {
+  it("keeps break motion nonzero and much slower without changing normal playback", () => {
+    expect(roundAnimationScale(true)).toBeGreaterThan(0);
+    expect(roundAnimationScale(true)).toBeLessThanOrEqual(0.1);
+    expect(roundAnimationScale(false)).toBe(1);
+  });
+
   it("advances years from continuous audio at three-second boundaries", () => {
     expect(indexForAudioTime(2.99, 36)).toBe(0);
     expect(indexForAudioTime(3, 36)).toBe(1);

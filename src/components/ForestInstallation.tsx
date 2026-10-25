@@ -12,7 +12,7 @@ import { ALL_SWITZERLAND, canopyAnnualVhi, DEFAULT_SELECTION, isNationalScope } 
 import { MAP_REGIONS, SWITZERLAND_BOUNDS } from "@/lib/forest-regions";
 import { REGION_IDS_BY_NAME, regionLabel } from "@/lib/vhi-source";
 import { createMapFraming } from "@/lib/map-framing";
-import { indexForAudioTime, scheduleRoundRestart } from "@/lib/audio-timeline";
+import { indexForAudioTime, roundAnimationScale, scheduleRoundRestart } from "@/lib/audio-timeline";
 import { DEFAULT_FIELD_RESOLUTION, fieldBufferSize, FRAME_INTERVAL_MS, frameTimeScale, resolutionOnImmersiveEnter, type FieldResolution } from "@/lib/field-resolution";
 
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -328,8 +328,9 @@ export function ForestInstallation() {
       const target = y.vhi ?? m;
       const motionTarget = y.vci ?? y.vhi ?? m;
       // gentle easing keeps year-to-year transitions smooth, especially in Immersion Mode
-      shown += (target - shown) * 0.012;
-      motion += (motionTarget - motion) * 0.012;
+      const easing = 1 - Math.pow(1 - 0.012, roundAnimationScale(holding.current));
+      shown += (target - shown) * easing;
+      motion += (motionTarget - motion) * easing;
       // calibrate against the observed record: worst year → 0, best year → 1
       const health = normalizeVhi(shown);
       const motionHealth = normalizeVhi(motion);
@@ -430,8 +431,8 @@ export function ForestInstallation() {
       lastFrame = t;
       if (!holding.current) {
         drawTimeline(t);
-        drawField(timeScale);
       }
+      drawField(timeScale * roundAnimationScale(holding.current));
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -568,7 +569,7 @@ export function ForestInstallation() {
         </section>
 
         <section className="forest-sheet forest-sheet-side forest-sheet-canopy" aria-label="Canopy">
-          <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} frozen={roundHold} dataScope={isNationalScope(regionId, immersive) ? "national" : "regional"} />
+          <ForestCanvas regionId={immersive ? immersiveTerrainRegion.current : regionId} vhi={canopyVhi} rain={0} airTemp={10} flow={0} animationScale={roundAnimationScale(roundHold)} dataScope={isNationalScope(regionId, immersive) ? "national" : "regional"} />
           <div className="forest-spine">02 · Canopy</div>
         </section>
 
