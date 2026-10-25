@@ -4,7 +4,7 @@
 
 # Map navigation correction
 - [x] Observe the actual map size and replace timing-based framing; retain Leaflet zoom and pan.
-- [ ] Verify menu selection, manual navigation, layout changes and immersion return.
+- [x] Verify menu selection, manual navigation, layout changes and immersion return.
 
 # Immersive national Canopy
 - [x] Decouple immersive health-field data from region identity and prevent stale health during terrain loading.
