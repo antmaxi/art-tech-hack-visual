@@ -196,6 +196,9 @@ body { background: var(--forest-wall); }
 .forest-bar { position: absolute; left: 20px; right: 20px; bottom: 0; height: 56px; display: flex; align-items: center; gap: 22px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--forest-dim); transition: opacity 0.8s ease, background 1s; z-index: 1000; }
 .forest-bar button, .forest-source { font: inherit; letter-spacing: inherit; text-transform: inherit; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; text-decoration: none; transition: color 0.3s; white-space: nowrap; }
 .forest-bar button:hover, .forest-source:hover, .forest-bar button[aria-pressed="true"] { color: var(--forest-ink); }
+/* icon-only transport controls: a comfortable hit area without extra visual weight */
+.forest-bar .forest-icon { padding: 5px; line-height: 0; }
+.forest-bar .forest-icon svg { display: block; }
 .forest-enter { color: var(--forest-emerald) !important; border: 1px solid color-mix(in oklab, var(--forest-emerald) 45%, transparent) !important; padding: 7px 12px !important; }
 .forest-enter:hover { background: color-mix(in oklab, var(--forest-emerald) 12%, transparent) !important; }
 .forest-year { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.04em; color: var(--forest-ink); min-width: 3ch; }
