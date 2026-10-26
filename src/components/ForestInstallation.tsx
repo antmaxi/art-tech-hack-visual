@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { ANNUAL_YEARS, SOURCE, band, baselineMean, statusLabel, type YearRecord } from "@/lib/forest-data";
 import { breathRate, noise, rgb, vhiColor } from "@/lib/forest-art";
 import { ZauberparkConcept } from "@/components/ZauberparkConcept";
@@ -595,13 +596,28 @@ export function ForestInstallation() {
           aria-label={`Timeline ${first} to ${last}, annual Swiss VHI`}
         />
         <div className="forest-bar-row">
-          <Button variant="ghost" type="button" onClick={() => setPlaying((p) => !p)}>
-            {playing ? "Pause" : "Play"}
+          <Button
+            variant="ghost"
+            type="button"
+            className="forest-icon"
+            aria-label={playing ? "Pause" : "Play"}
+            title={playing ? "Pause playback" : "Play playback"}
+            onClick={() => setPlaying((p) => !p)}
+          >
+            {playing ? <Pause size={15} aria-hidden="true" /> : <Play size={15} aria-hidden="true" />}
           </Button>
           <span className="forest-year">{year.year}</span>
           {PRELIMINARY_YEARS[year.year] && <span className="forest-prelim">preliminary · {PRELIMINARY_YEARS[year.year]}</span>}
-          <Button variant="ghost" type="button" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
-            Sound {sound ? "on" : "off"}
+          <Button
+            variant="ghost"
+            type="button"
+            className="forest-icon"
+            aria-pressed={sound}
+            aria-label={sound ? "Sound on" : "Sound off"}
+            title={sound ? "Mute the soundtrack" : "Play the soundtrack"}
+            onClick={() => setSound((s) => !s)}
+          >
+            {sound ? <Volume2 size={15} aria-hidden="true" /> : <VolumeX size={15} aria-hidden="true" />}
           </Button>
           <select
             className="forest-region forest-only-panels"
